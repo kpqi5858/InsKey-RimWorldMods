@@ -2,7 +2,7 @@
 (New repository)
 
 #### Mods
- - ItemListSelector
- - BuilderTweaks
- - Prioritize
- - RWSCompressor
+ - [ItemListSelector](https://steamcommunity.com/sharedfiles/filedetails/?id=1522414793)
+ - [BuilderTweaks](https://steamcommunity.com/sharedfiles/filedetails/?id=1600554794)
+ - [Prioritize](https://steamcommunity.com/sharedfiles/filedetails/?id=1579272031)
+ - [RWSCompressor](https://steamcommunity.com/sharedfiles/filedetails/?id=1645654704)
