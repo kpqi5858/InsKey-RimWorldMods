@@ -31,7 +31,7 @@ namespace ItemListSelector
         {
             var modSave = MainMod.Save;
             int OpenMask = 9;
-            int yOffset = 10;
+            float yOffset = 10;
 
             ThingFilterUI.DoThingFilterConfigWindow(new Rect(inRect.x, inRect.y + yOffset, inRect.width, inRect.height - yOffset), ref scrollPosition, modSave.CategoryFilter, modSave.CategoryFilterGlobal, OpenMask);
         }
@@ -179,6 +179,7 @@ namespace ItemListSelector
     [HarmonyPatch(typeof(Listing_ResourceReadout), "DoThingDef")]
     public class Patch_RecourceReadout
     {
+        //TODO : Convert to transpiler
         public static void Postfix(ThingDef thingDef, int nestLevel, Listing_ResourceReadout __instance)
         {
             ModLogger l = MainMod.logger;
