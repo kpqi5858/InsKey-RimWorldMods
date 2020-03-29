@@ -45,7 +45,7 @@ namespace ItemListSelector
 
         private static Action CallbackAction = SettingChangedCallback;
 
-        public ThingFilter CategoryFilter = new ThingFilter(CallbackAction);
+        public ThingFilter CategoryFilter;
         public ThingFilter CategoryFilterGlobal;
 
         public CategorizedOpenSave(Game game) 
@@ -63,6 +63,12 @@ namespace ItemListSelector
                 }
             }
 
+            InitCategoryFilter();
+        }
+
+        private void InitCategoryFilter()
+        {
+            CategoryFilter = new ThingFilter(CallbackAction);
             CategoryFilter.CopyAllowancesFrom(CategoryFilterGlobal);
         }
 
@@ -101,6 +107,17 @@ namespace ItemListSelector
             }
 
             Scribe_Deep.Look(ref CategoryFilter, "CategoryFilter", CallbackAction);
+            if (CategoryFilter == null)
+            {
+                Log.Message("CategoryFilter is null, probably old save. Fixing..");
+
+                if (Scribe.mode != LoadSaveMode.LoadingVars)
+                {
+                    Log.Warning("But Scribe.mode is not LoadingVars. shouldn't happen?");
+                }
+
+                InitCategoryFilter();
+            }
         }
 
         public void ExpandCategories()
@@ -218,15 +235,6 @@ namespace ItemListSelector
         }
     }
 
-    [HarmonyPatch(typeof(ResourceCounter), "ShouldCount")]
-    public class Patch_ShouldCount
-    {
-        public static void Postfix(Thing t, ref bool __result)
-        {
-            __result = __result && MainMod.Save.CategoryFilter.Allows(t);
-
-        }
-    }
 
     [HarmonyPatch(typeof(WidgetRow), "ToggleableIcon")]
     public class Patch_WidgetRow
@@ -247,12 +255,21 @@ namespace ItemListSelector
 
             //new Rect(float, float, float, float)
             var RectCtor = typeof(Rect).GetConstructor(new Type[] { typeof(float), typeof(float), typeof(float), typeof(float) });
-            int Find = InstList.FirstIndexOf((CodeInstruction inst) => inst.operand == RectCtor);
 
-            InstList.Insert(Find + 1, new CodeInstruction(OpCodes.Ldloc_0));
-            InstList.Insert(Find + 2, new CodeInstruction(OpCodes.Call, typeof(Patch_WidgetRow).GetMethod("IconPatch")));
+            int PatchPhase = 0;
 
-            return InstList;
+            foreach (var inst in instructions)
+            {
+                yield return inst;
+
+                if (inst.operand == RectCtor && PatchPhase == 0)
+                {
+                    yield return new CodeInstruction(OpCodes.Ldloc_0);
+                    yield return new CodeInstruction(OpCodes.Call, typeof(Patch_WidgetRow).GetMethod("IconPatch"));
+
+                    PatchPhase = 1;
+                }
+            }
         }
 
         public static void IconPatch(Rect rect)
@@ -305,19 +322,115 @@ namespace ItemListSelector
     }
 
 
-    //Wtf is this patch?
-    /*
-    [HarmonyPatch(typeof(MapInterface), "MapInterfaceOnGUI_AfterMainTabs")]
-    public class Patch_HandleMapClicks
+    [HarmonyPatch(typeof(Listing_ResourceReadout), "DoCategory")]
+    public class Patch_DoCategory1
     {
-        public static void Prefix()
+        public static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
         {
-            UIRoot ui = Find.UIRoot;
-            if (ui is UIRoot_Play && !WorldRendererUtility.WorldRenderedNow)
+            var InstList = instructions.ToList();
+
+            var GetCntIn = typeof(ResourceCounter).GetMethod("GetCountIn", new Type[] { typeof(ThingCategoryDef) });
+            int Find = InstList.FirstIndexOf((CodeInstruction inst) => inst.operand == GetCntIn);
+
+            InstList[Find] = new CodeInstruction(OpCodes.Call, typeof(Patch_DoCategory1).GetMethod("PatchFunc"));
+
+            return InstList;
+        }
+
+        public static int PatchFunc(ResourceCounter counter, ThingCategoryDef def)
+        {
+            return GetCountIn(counter, def);
+        }
+
+        public static int PatchFunc2(ResourceCounter counter, ThingDef def)
+        {
+            return GetCount(counter, def);
+        }
+
+        private static int GetCountIn(ResourceCounter counter, ThingCategoryDef cat)
+        {
+            int num = 0;
+            for (int i = 0; i < cat.childThingDefs.Count; i++)
             {
-                Traverse.Create(((UIRoot_Play)ui).mapUI).Field("resourceReadout").GetValue<ResourceReadout>().ResourceReadoutOnGUI();
+                num += GetCount(counter, cat.childThingDefs[i]);
             }
+            for (int j = 0; j < cat.childCategories.Count; j++)
+            {
+                if (!cat.childCategories[j].resourceReadoutRoot)
+                {
+                    num += GetCountIn(counter, cat.childCategories[j]);
+                }
+            }
+            return num;
+        }
+
+        private static int GetCount(ResourceCounter counter, ThingDef rDef)
+        {
+            var countedAmounts = counter.AllCountedAmounts;
+
+            if (rDef.resourceReadoutPriority == ResourceCountPriority.Uncounted)
+            {
+                return 0;
+            }
+
+            //Patch
+            if (MainMod.Save?.CategoryFilter.Allows(rDef) == false)
+            {
+                return 0;
+            }
+            int result;
+            if (countedAmounts.TryGetValue(rDef, out result))
+            {
+                return result;
+            }
+            Log.Error("[ILS Patch_DoCategory1] Looked for nonexistent key " + rDef + " in counted resources.", false);
+            countedAmounts.Add(rDef, 0);
+            return 0;
         }
     }
-    */
+
+    [HarmonyPatch(typeof(Listing_ResourceReadout), "DoThingDef")]
+    public class Patch_DoCategory2
+    {
+        public static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
+        {
+            var InstList = instructions.ToList();
+
+            var GetCntIn = typeof(ResourceCounter).GetMethod("GetCount", new Type[] { typeof(ThingDef) });
+            int Find = InstList.FirstIndexOf((CodeInstruction inst) => inst.operand == GetCntIn);
+
+            InstList[Find] = new CodeInstruction(OpCodes.Call, typeof(Patch_DoCategory1).GetMethod("PatchFunc2"));
+
+            return InstList;
+        }
+    }
+
+    [HarmonyPatch(typeof(ResourceReadout), "DoReadoutSimple")]
+    public class Patch_ReadoutSimple
+    {
+        public static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
+        {
+            var InstList = instructions.ToList();
+
+            var ThatField = typeof(ThingDef).GetField("resourceReadoutAlwaysShow");
+
+            int Find = InstList.FirstIndexOf((CodeInstruction inst) => inst.operand == ThatField);
+
+            for (int i = Find - 1; i >= Find - 5; i--)
+            {
+                InstList[i] = new CodeInstruction(OpCodes.Nop);
+            }
+
+            InstList[Find] = new CodeInstruction(OpCodes.Call, typeof(Patch_ReadoutSimple).GetMethod("PatchFunc"));
+
+            return InstList;
+        }
+
+        public static bool PatchFunc(ref KeyValuePair<ThingDef, int> pair)
+        {
+            bool originalRet = pair.Value > 0 || pair.Key.resourceReadoutAlwaysShow;
+
+            return originalRet && MainMod.Save?.CategoryFilter.Allows(pair.Key) == true;
+        }
+    }
 }
