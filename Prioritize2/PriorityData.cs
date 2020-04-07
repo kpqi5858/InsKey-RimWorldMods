@@ -8,20 +8,47 @@ namespace Prioritize2
 {
     public class PriorityData : GameComponent
     {
+        //Key : Thing.thingIDNumber, Value : Priority
         private Dictionary<int, int> ThingPriority = new Dictionary<int, int>();
+        //Key : Map.uniqueID, Value : PriorityMapGrid
         private Dictionary<int, PriorityMapGrid> GridPriority = new Dictionary<int, PriorityMapGrid>();
+
+        public PriorityRender Render;
+
+        private PriorityFilter FilterInternal;
+
+        public PriorityFilter Filter
+        {
+            get
+            {
+                return FilterInternal;
+            }
+            set
+            {
+                FilterInternal = value;
+
+                Render.MarkDirty(null);
+            }
+        }
 
         public override void ExposeData()
         {
             base.ExposeData();
-            Scribe_Collections.Look(ref ThingPriority, "thingPriority");
-            Scribe_Collections.Look(ref GridPriority, "gridPriority");
+            Scribe_Collections.Look(ref ThingPriority, "thingPriority", LookMode.Value, LookMode.Value);
+            Scribe_Collections.Look(ref GridPriority, "gridPriority", LookMode.Value, LookMode.Deep);
+            Scribe_Deep.Look(ref FilterInternal, "priorityFilter");
         }
 
         public override void FinalizeInit()
         {
             base.FinalizeInit();
 
+            RemoveInvalids();
+            Render.MarkDirty(null);
+        }
+
+        public void RemoveInvalids()
+        {
             Dictionary<int, int> NewThingPri = new Dictionary<int, int>();
             foreach (var map in Find.Maps)
             {
@@ -40,12 +67,19 @@ namespace Prioritize2
             ThingPriority = NewThingPri;
         }
 
-        public void MapRemoved(Map map)
+        public void Notify_MapRemoved(Map map)
         {
             GridPriority.Remove(map.uniqueID);
+            Render.Notify_MapRemoved(map);
         }
 
-        private PriorityMapGrid GetOrCreatePriorityMapGrid(Map map)
+        public void ThingDestroyed(Thing thing)
+        {
+            //Remove priority on it
+            if (IsValid(thing)) SetPriority(thing, 0);
+        }
+
+        public PriorityMapGrid GetOrCreatePriorityMapGrid(Map map)
         {
             if (GridPriority.TryGetValue(map.uniqueID, out PriorityMapGrid grid))
             {
@@ -59,7 +93,7 @@ namespace Prioritize2
         }
 
         //Can assign a priority to it?
-        private bool IsValidCheck(Thing thing, string methodName)
+        private bool IsValidDoError(Thing thing, string methodName)
         {
             if (thing == null)
             {
@@ -74,17 +108,22 @@ namespace Prioritize2
             return true;
         }
 
+        private bool IsValid(Thing thing)
+        {
+            return thing != null && thing.def.HasThingIDNumber;
+        }
+
         public int GetPriority(Thing thing)
         {
-            if (!IsValidCheck(thing, "GetPriority")) return 0;
+            if (!IsValidDoError(thing, "GetPriority")) return 0;
 
-            //GenCollection
+            //GenCollection.TryGetValue - Returns fallback one if not found in dictionary
             return ThingPriority.TryGetValue(thing.thingIDNumber, 0);
         }
 
         public bool HasPriority(Thing thing)
         {
-            if (!IsValidCheck(thing, "HasPriority")) return false;
+            if (!IsValidDoError(thing, "HasPriority")) return false;
 
             return ThingPriority.ContainsKey(thing.thingIDNumber);
         }
@@ -92,7 +131,7 @@ namespace Prioritize2
         //If priority is 0, removes priority
         public void SetPriority(Thing thing, int priority)
         {
-            if (!IsValidCheck(thing, "SetPriority")) return;
+            if (!IsValidDoError(thing, "SetPriority")) return;
 
             if (priority == 0)
             {
@@ -111,9 +150,21 @@ namespace Prioritize2
                 Log.ErrorOnce("GetPriorityOnCell with null map.", "P2_GPOC".GetHashCode());
                 return 0;
             }
-
             var grid = GetOrCreatePriorityMapGrid(map);
+
             return grid.GetPriorityAt(cell);
+        }
+
+        public void SetPriorityOnCell(Map map, IntVec3 cell, int pri)
+        {
+            if (map == null)
+            {
+                Log.ErrorOnce("SetPriorityOnCell with null map.", "P2_SPOC".GetHashCode());
+                return;
+            }
+            var grid = GetOrCreatePriorityMapGrid(map);
+
+            grid.SetPriorityAt(cell, pri);
         }
 
     }

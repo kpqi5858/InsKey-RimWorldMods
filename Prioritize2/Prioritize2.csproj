@@ -303,8 +303,11 @@
     <Compile Include="Patch\Patch_GetPriority.cs" />
     <Compile Include="Patch\Patch_MapDeiniter.cs" />
     <Compile Include="Patch\Patch_Prioritized.cs" />
+    <Compile Include="Patch\Patch_ThingDestroyed.cs" />
     <Compile Include="PriorityData.cs" />
+    <Compile Include="PriorityFilter.cs" />
     <Compile Include="PriorityMapGrid.cs" />
+    <Compile Include="PriorityRender.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

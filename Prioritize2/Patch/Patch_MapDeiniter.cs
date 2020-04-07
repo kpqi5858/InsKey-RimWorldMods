@@ -11,7 +11,7 @@ namespace Prioritize2.Patch
     {
         public static void Prefix(Map map)
         {
-            MainMod.Data.MapRemoved(map);
+            MainMod.Data.Notify_MapRemoved(map);
         }
     }
 }

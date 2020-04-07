@@ -11,7 +11,8 @@ namespace Prioritize2
 
         public static PriorityData Data;
 
-        public override string ModIdentifier => "Priortize2";
+        public static MainMod Instance;
 
+        public override string ModIdentifier => "Priortize2";
     }
 }
