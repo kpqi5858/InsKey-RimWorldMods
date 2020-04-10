@@ -8,26 +8,9 @@ namespace Prioritize2
 {
     public class PriorityRender
     {
-        private class MapPriorityCache
-        {
-            public List<Thing> CachedThings = new List<Thing>();
-            public bool IsDirty = false;
-        }
-
-        private Dictionary<Map, MapPriorityCache> PriorityRenderCache = new Dictionary<Map, MapPriorityCache>();
-
         public bool AnyDirty
         {
             get; private set;
-        }
-
-        private MapPriorityCache GetOrCreateMapPriorityCache(Map map)
-        {
-            if (!PriorityRenderCache.ContainsKey(map))
-            {
-                PriorityRenderCache.Add(map, new MapPriorityCache());
-            }
-            return PriorityRenderCache[map];
         }
 
         //If null, mark all maps dirty
@@ -37,12 +20,12 @@ namespace Prioritize2
             {
                 foreach (var m in Find.Maps)
                 {
-                    GetOrCreateMapPriorityCache(m).IsDirty = true;
+                    m.GetPriorityData().RenderCache.IsDirty = true;
                 }
             }
             else
             {
-                GetOrCreateMapPriorityCache(map).IsDirty = true;
+                map.GetPriorityData().RenderCache.IsDirty = true;
             }
             AnyDirty = true;
         }
@@ -64,23 +47,20 @@ namespace Prioritize2
         {
             var data = MainMod.Data;
 
-            var maps = from pair in PriorityRenderCache where pair.Value.IsDirty select pair.Key;
+            var maps = from map in Find.Maps where map.GetPriorityData().RenderCache.IsDirty select map;
 
             foreach (var map in maps)
             {
-                var priCache = GetOrCreateMapPriorityCache(map);
+                var priCache = map.GetPriorityData().RenderCache;
 
-                priCache.CachedThings.Clear();
+                priCache.ThingCache.Clear();
                 priCache.IsDirty = false;
 
-                var mapThings = map.listerThings.AllThings;
-
-                for (int i = 0; i < mapThings.Count; i++)
+                foreach (var thing in map.listerThings.AllThings)
                 {
-                    var thing = mapThings[i];
                     if (MainMod.Data.Filter.Allows(thing))
                     {
-                        priCache.CachedThings.Add(thing);
+                        priCache.ThingCache.Add(thing);
                     }
                 }
             }
@@ -97,9 +77,11 @@ namespace Prioritize2
             AnyDirty = false;
         }
 
-        public void Notify_MapRemoved(Map map)
+        public void RemoveFromCache(Thing t)
         {
-            PriorityRenderCache.Remove(map);
+            if (t.Map == null) return;
+
+            t.Map.GetPriorityData().RenderCache.ThingCache.Remove(t);
         }
 
         public void Tick()

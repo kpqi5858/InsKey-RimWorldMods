@@ -30,6 +30,7 @@ namespace Prioritize2.Patch
             if (__result < 0f)
             {
                 Log.Warning("Patching priority but old priority was less than 0. This can cause unexpected behavior.");
+                LoggedNegWarn = true;
             }
 
             __result += modPriority;

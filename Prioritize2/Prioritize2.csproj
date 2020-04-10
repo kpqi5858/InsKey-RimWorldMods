@@ -39,10 +39,6 @@
       <HintPath>..\..\..\..\RimWorldWin64_Data\Managed\Assembly-CSharp.dll</HintPath>
       <Private>False</Private>
     </Reference>
-    <Reference Include="HugsLib, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\UnlimitedHugs.Rimworld.HugsLib.7.1.4\lib\net472\HugsLib.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Runtime.InteropServices.RuntimeInformation" />
@@ -298,15 +294,18 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Designation\Designator_PrioritizeThing.cs" />
+    <Compile Include="Designation\Designator_PrioritizeZone.cs" />
+    <Compile Include="Designation\PrioritizeDesignationDefOf.cs" />
+    <Compile Include="GenPriorityMod.cs" />
     <Compile Include="MainMod.cs" />
-    <Compile Include="ModSettings.cs" />
+    <Compile Include="PrioritizeModSettings.cs" />
     <Compile Include="Patch\Patch_GetPriority.cs" />
-    <Compile Include="Patch\Patch_MapDeiniter.cs" />
     <Compile Include="Patch\Patch_Prioritized.cs" />
     <Compile Include="Patch\Patch_ThingDestroyed.cs" />
     <Compile Include="PriorityData.cs" />
     <Compile Include="PriorityFilter.cs" />
-    <Compile Include="PriorityMapGrid.cs" />
+    <Compile Include="PriorityMapData.cs" />
     <Compile Include="PriorityRender.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

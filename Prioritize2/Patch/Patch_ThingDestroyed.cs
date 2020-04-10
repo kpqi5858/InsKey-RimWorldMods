@@ -11,7 +11,8 @@ namespace Prioritize2.Patch
     {
         public static void Prefix(Thing __instance)
         {
-
+            //null?
+            MainMod.Data?.ThingDestroyed(__instance);
         }
     }
 }

@@ -1,18 +1,39 @@
 ﻿using System;
 using RimWorld;
 using Verse;
-using HugsLib;
+using HarmonyLib;
+using UnityEngine;
 
 namespace Prioritize2
 {
-    public class MainMod : ModBase
+    public class MainMod : Mod
     {
-        public static ModSettings ModConfig;
+        public static PrioritizeModSettings ModConfig;
 
         public static PriorityData Data;
 
         public static MainMod Instance;
 
-        public override string ModIdentifier => "Priortize2";
+        public static int SelectedPriority = 0;
+
+        public Harmony harmony;
+
+        public MainMod(ModContentPack content) : base(content)
+        {
+            harmony = new Harmony("InsertKey.Prioritize2");
+            harmony.PatchAll();
+
+            ModConfig = GetSettings<PrioritizeModSettings>();
+        }
+
+        public override string SettingsCategory()
+        {
+            return "Prioritize 2";
+        }
+
+        public override void DoSettingsWindowContents(Rect inRect)
+        {
+            ModConfig.DoSettingsWindow(inRect);
+        }
     }
 }

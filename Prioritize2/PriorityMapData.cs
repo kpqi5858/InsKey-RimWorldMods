@@ -5,68 +5,31 @@ using Verse;
 
 namespace Prioritize2
 {
-    public class PriorityMapGrid : IExposable
+    public class PriorityMapData : MapComponent
     {
-        private int mapUID = -1;
-        private Map cachedMap;
+        public class MapPriorityCache
+        {
+            public List<Thing> ThingCache = new List<Thing>();
+            public bool IsDirty = false;
+        }
 
         private int[] priorityGrid;
 
-        public Map Map
+        public MapPriorityCache RenderCache = new MapPriorityCache();
+
+        public PriorityMapData(Map map) : base(map)
         {
-            get
-            {
-                Map result = null;
-
-                if (cachedMap != null)
-                {
-                    if (cachedMap.uniqueID != mapUID)
-                    {
-                        //Log.Error("PriorityMapGrid : cachedMap uniqueID isn't equal to mapUID.");
-                    }
-                    else
-                    {
-                        result = cachedMap;
-                    }
-                }
-                if (result == null)
-                {
-                    result = Find.Maps.Find((Map m) => m.uniqueID == mapUID);
-
-                    if (result == null)
-                    {
-                        Log.Error("PriorityMapGrid : Cannot find map, this means this grid is invalid.");
-                    }
-
-                    cachedMap = result;
-                }
-
-                return result;
-            }
-        }
-
-        public PriorityMapGrid()
-        {
-
-        }
-
-        //Called only when it is first initialized
-        public PriorityMapGrid(Map map)
-        {
-            mapUID = map.uniqueID;
-            cachedMap = map;
-
             InitGrid();
         }
 
         private void InitGrid()
         {
-            priorityGrid = new int[Map.cellIndices.NumGridCells];
+            priorityGrid = new int[map.cellIndices.NumGridCells];
         }
 
         public int GetPriorityAt(IntVec3 cell)
         {
-            int index = Map.cellIndices.CellToIndex(cell);
+            int index = map.cellIndices.CellToIndex(cell);
             if (index >= priorityGrid.Length || index < 0)
             {
                 Log.ErrorOnce("PriorityMapGrid : GetPriorityAt with invalid cell (out of range).", "P2_PMGPA".GetHashCode());
@@ -77,7 +40,7 @@ namespace Prioritize2
 
         public void SetPriorityAt(IntVec3 cell, int pri)
         {
-            int index = Map.cellIndices.CellToIndex(cell);
+            int index = map.cellIndices.CellToIndex(cell);
             if (index >= priorityGrid.Length || index < 0)
             {
                 Log.ErrorOnce("PriorityMapGrid : SetPriorityAt with invalid cell (out of range).", "P2_PMSPA".GetHashCode());
@@ -86,13 +49,13 @@ namespace Prioritize2
             priorityGrid[index] = pri;
         }
 
-        public void ExposeData()
+        public override void MapRemoved()
         {
-            cachedMap = null;
-            Scribe_Values.Look(ref mapUID, "mapUID", -1);
+            GenPriorityMod.MapRemoved(map);
+        }
 
-            Map map = Map;
-
+        public override void ExposeData()
+        {
             byte[] arr = null;
 
             if (Scribe.mode == LoadSaveMode.Saving)
