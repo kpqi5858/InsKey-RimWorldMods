@@ -36,7 +36,10 @@ namespace ItemListSelector
         //But why modder hid(privated) everything?
         public override void FinalizeInit()
         {
-            InitCategoryFilter();
+            if (CategoryFilter == null)
+            {
+                InitCategoryFilter();
+            }
         }
 
         private void InitCategoryFilter()

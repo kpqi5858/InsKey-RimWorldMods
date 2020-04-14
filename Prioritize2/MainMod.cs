@@ -20,6 +20,8 @@ namespace Prioritize2
 
         public MainMod(ModContentPack content) : base(content)
         {
+            Instance = this;
+
             harmony = new Harmony("InsertKey.Prioritize2");
             harmony.PatchAll();
 

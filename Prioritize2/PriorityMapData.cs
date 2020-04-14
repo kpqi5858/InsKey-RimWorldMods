@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using RimWorld;
 using Verse;
+using UnityEngine;
 
 namespace Prioritize2
 {
@@ -13,9 +14,30 @@ namespace Prioritize2
             public bool IsDirty = false;
         }
 
+
         private int[] priorityGrid;
 
         public MapPriorityCache RenderCache = new MapPriorityCache();
+
+        private CellBoolDrawer drawerInt;
+
+        public CellBoolDrawer Drawer
+        {
+            get
+            {
+                if (drawerInt == null)
+                {
+                    drawerInt = new CellBoolDrawer(
+                        (int index) => priorityGrid[index] != 0,
+                        () => Color.white,
+                        (int index) => priorityGrid[index].GetPriorityColor(),
+                        map.Size.x,
+                        map.Size.y,
+                        3625);
+                }
+                return drawerInt;
+            }
+        }
 
         public PriorityMapData(Map map) : base(map)
         {
@@ -25,6 +47,11 @@ namespace Prioritize2
         private void InitGrid()
         {
             priorityGrid = new int[map.cellIndices.NumGridCells];
+        }
+
+        public void MarkDraw()
+        {
+            Drawer.MarkForDraw();
         }
 
         public int GetPriorityAt(IntVec3 cell)
@@ -52,6 +79,11 @@ namespace Prioritize2
         public override void MapRemoved()
         {
             GenPriorityMod.MapRemoved(map);
+        }
+
+        public override void MapComponentUpdate()
+        {
+            Drawer.CellBoolDrawerUpdate();
         }
 
         public override void ExposeData()

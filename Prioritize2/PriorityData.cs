@@ -3,6 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using RimWorld;
 using Verse;
+using Verse.Sound;
+using UnityEngine;
+using Prioritize2.Designation;
 
 namespace Prioritize2
 {
@@ -11,9 +14,9 @@ namespace Prioritize2
         //Key : Thing.thingIDNumber, Value : Priority
         private Dictionary<int, int> ThingPriority = new Dictionary<int, int>();
 
-        public PriorityRender Render;
+        public PriorityRender Render = new PriorityRender();
 
-        private PriorityFilter FilterInternal;
+        private PriorityFilter FilterInternal = new PriorityFilter();
 
         public PriorityFilter Filter
         {
@@ -29,6 +32,11 @@ namespace Prioritize2
             }
         }
 
+        public PriorityData(Game game)
+        {
+            MainMod.Data = this;
+        }
+
         public override void ExposeData()
         {
             base.ExposeData();
@@ -42,6 +50,33 @@ namespace Prioritize2
 
             RemoveInvalids();
             Render.MarkDirty(null);
+        }
+
+        public override void GameComponentTick()
+        {
+            Render.Tick();
+        }
+        public override void GameComponentOnGUI()
+        {
+            MousePriorityControl();
+        }
+
+        //Ctrl+Wheel to select priority
+        private void MousePriorityControl()
+        {
+            var selDesign = Find.DesignatorManager?.SelectedDesignator;
+            bool shouldDo = selDesign is Designator_PrioritizeThing
+                         || selDesign is Designator_PrioritizeZone;
+
+            if (shouldDo)
+            {
+                if (Event.current.type == EventType.ScrollWheel)
+                {
+                    Event.current.Use();
+                    MainMod.SelectedPriority += Math.Sign(Event.current.delta.y);
+                    SoundDefOf.Tick_High.PlayOneShotOnCamera(null);
+                }
+            }
         }
 
         public void RemoveInvalids()

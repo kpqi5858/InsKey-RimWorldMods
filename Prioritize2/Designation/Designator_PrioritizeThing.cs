@@ -39,6 +39,9 @@ namespace Prioritize2.Designation
             //Can't prioritize other faction's things
             if (t.Faction?.IsPlayer != true) return false;
 
+            //Can't do when fogged
+            if (t.Fogged()) return false;
+
             return MainMod.Data.Filter.Allows(t) && PriorityData.CanPrioritize(t);
         }
 
@@ -48,6 +51,11 @@ namespace Prioritize2.Designation
             {
                 if (CanDesignateThing(thing).Accepted) DesignateThing(thing);
             }
+        }
+        public override void DrawMouseAttachments()
+        {
+            base.DrawMouseAttachments();
+            GenUI.DrawMouseAttachment(icon, MainMod.SelectedPriority.ToString(), iconAngle, iconOffset, null);
         }
 
         public override void DesignateThing(Thing t)

@@ -9,8 +9,31 @@ namespace Prioritize2
 {
     public class PrioritizeModSettings : ModSettings
     {
-        //Workgiver_Scanner
-        private List<Type> BannedPrioritizeWorkGivers = new List<Type>();
+        //Subclass of Workgiver_Scanner
+        private List<Type> NoPriorityPatchOn = new List<Type>();
+
+        //R, G, B, A
+        private uint lowPriorityColorHex = 0xff0000ff;
+        private uint highPriorityColorHex = 0x00ff00ff;
+
+        public int priorityMax = 10;
+        public int priorityMin = -10;
+
+        public Color LowPriorityColor
+        {
+            get
+            {
+                return GenPriorityMod.FromHex(lowPriorityColorHex);
+            }
+        }
+
+        public Color HighPriorityColor
+        {
+            get
+            {
+                return GenPriorityMod.FromHex(highPriorityColorHex);
+            }
+        }
 
         public IEnumerable<Type> AllWGScannerType
         {
@@ -25,12 +48,12 @@ namespace Prioritize2
             //Set default values
 
             //Modifing priority on it can cause pawns to remove wrong roofs,
-            BannedPrioritizeWorkGivers.Add(typeof(WorkGiver_RemoveRoof));
+            NoPriorityPatchOn.Add(typeof(WorkGiver_RemoveRoof));
         }
 
         public bool IsPatchAllowed(Type type)
         {
-            return BannedPrioritizeWorkGivers.Contains(type);
+            return NoPriorityPatchOn.Contains(type);
         }
 
         public void DoSettingsWindow(Rect rect)
@@ -44,7 +67,7 @@ namespace Prioritize2
 
             if (Scribe.mode == LoadSaveMode.Saving)
             {
-                foreach (var type in BannedPrioritizeWorkGivers)
+                foreach (var type in NoPriorityPatchOn)
                 {
                     typesString.Add(type.FullName);
                 }
@@ -54,7 +77,7 @@ namespace Prioritize2
 
             if (Scribe.mode == LoadSaveMode.LoadingVars)
             {
-                BannedPrioritizeWorkGivers.Clear();
+                NoPriorityPatchOn.Clear();
 
                 foreach (var str in typesString)
                 {
@@ -65,11 +88,16 @@ namespace Prioritize2
                     }
                     else
                     {
-                        BannedPrioritizeWorkGivers.Add(type);
+                        NoPriorityPatchOn.Add(type);
                     }
                 }
             }
 
+            Scribe_Values.Look(ref lowPriorityColorHex, "lowPriorityColor", lowPriorityColorHex);
+            Scribe_Values.Look(ref highPriorityColorHex, "highPriorityColor", highPriorityColorHex);
+
+            Scribe_Values.Look(ref priorityMax, "priorityMax", priorityMax);
+            Scribe_Values.Look(ref priorityMin, "priorityMin", priorityMin);
         }
     }
 }

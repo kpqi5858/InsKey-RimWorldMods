@@ -35,7 +35,7 @@ namespace Prioritize2
             LongEventHandler.QueueLongEvent(
                 RecalculateInternal, 
                 "P2_Recalculate", 
-                true, 
+                false, 
                 delegate (Exception e) 
                 { 
                     Log.Error("Exception while recalculating priority render : " + e);
@@ -86,6 +86,8 @@ namespace Prioritize2
 
         public void Tick()
         {
+            if (Find.Maps.NullOrEmpty()) return;
+
             //If Priority Marks is being rendered and AnyDirty
             if (true && AnyDirty)
             {
