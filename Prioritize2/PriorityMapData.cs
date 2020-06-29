@@ -28,7 +28,7 @@ namespace Prioritize2
                 if (drawerInt == null)
                 {
                     drawerInt = new CellBoolDrawer(
-                        (int index) => priorityGrid[index] != 0,
+                        (int index) => true,
                         () => Color.white,
                         (int index) => priorityGrid[index].GetPriorityColor(),
                         map.Size.x,
@@ -74,6 +74,8 @@ namespace Prioritize2
                 return;
             }
             priorityGrid[index] = pri;
+
+            Drawer.SetDirty();
         }
 
         public override void MapRemoved()
@@ -83,6 +85,7 @@ namespace Prioritize2
 
         public override void MapComponentUpdate()
         {
+            Drawer.MarkForDraw();
             Drawer.CellBoolDrawerUpdate();
         }
 

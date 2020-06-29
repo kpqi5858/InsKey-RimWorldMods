@@ -23,6 +23,8 @@ namespace RWSCompressor
             var hinstance = new Harmony("RWSCompressor.Harmony");
             
             hinstance.PatchAll();
+
+            Compat_BetterModMismatchWindow.SetupIfNeeded(hinstance);
         }
 
         public static Dictionary<string, bool> CompressedCache = new Dictionary<string, bool>();
@@ -108,11 +110,11 @@ namespace RWSCompressor
                     {
                         Log.Warning("Assumed compressed file which is not a save file : " + path);
                     }
-                    stream = new DeflateStream(new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.None), CompressionMode.Decompress);
+                    stream = new DeflateStream(new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite), CompressionMode.Decompress);
                 }
                 else
                 {
-                    stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.None);
+                    stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
                 }
             }
             catch
