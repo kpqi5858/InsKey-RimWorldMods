@@ -17,6 +17,7 @@ namespace RWSCompressor
     {
         public static void SetupIfNeeded(Harmony harmony)
         {
+            //TODO: Improve this finding logic?
             if (LoadedModManager.RunningModsListForReading.FirstOrDefault((ModContentPack mod) => mod.PackageIdPlayerFacing.Equals("Madeline.ModMismatchFormatter")) != null)
             {
                 Log.Message("Compat patch with Better ModMismatch Window");

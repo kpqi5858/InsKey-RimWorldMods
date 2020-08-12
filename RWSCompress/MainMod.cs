@@ -160,7 +160,7 @@ namespace RWSCompressor
         ///                                    --------------------------
         /// and replace to
         /// 
-        /// using (StreamReader streamReader = new StreamReader(MainMod.GetRightReadStream()))
+        /// using (StreamReader streamReader = new StreamReader(MainMod.GetRightReadStream(filePath)))
         ///                                    ----------------------------------------------
         /// </summary>
         /// <param name="instructions"></param>
