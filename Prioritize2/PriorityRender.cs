@@ -47,9 +47,9 @@ namespace Prioritize2
         {
             var data = MainMod.Data;
 
-            var maps = from map in Find.Maps where map.GetPriorityData().RenderCache.IsDirty select map;
+            var dirtymaps = from map in Find.Maps where map.GetPriorityData().RenderCache.IsDirty select map;
 
-            foreach (var map in maps)
+            foreach (var map in dirtymaps)
             {
                 var priCache = map.GetPriorityData().RenderCache;
 
@@ -69,7 +69,7 @@ namespace Prioritize2
             {
                 Log.Warning("Recalculate called with AnyDirty = false");
             }
-            if (maps.Count() == 0)
+            if (dirtymaps.Count() == 0)
             {
                 Log.Warning("Recalculate called but there's no dirty map caches.");
             }
@@ -82,6 +82,32 @@ namespace Prioritize2
             if (t.Map == null) return;
 
             t.Map.GetPriorityData().RenderCache.ThingCache.Remove(t);
+        }
+
+        public void ThingPriorityUpdated(Thing t, int newPriority)
+        {
+            if (t.Map == null) return;
+
+            var data = t.Map.GetPriorityData();
+
+            if (newPriority == 0)
+            {
+                data.RenderCache.ThingCache.Remove(t);
+            }
+            else
+            {
+                bool matchesFilter = MainMod.Data.Filter.Allows(t);
+
+                if (matchesFilter)
+                {
+                    data.RenderCache.ThingCache.Add(t);
+                }
+                else
+                {
+                    Log.Message("This shouldn't called?");
+                    data.RenderCache.ThingCache.Remove(t);
+                }
+            }
         }
 
         public void Tick()

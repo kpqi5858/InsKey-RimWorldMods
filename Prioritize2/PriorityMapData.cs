@@ -10,7 +10,7 @@ namespace Prioritize2
     {
         public class MapPriorityCache
         {
-            public List<Thing> ThingCache = new List<Thing>();
+            public HashSet<Thing> ThingCache = new HashSet<Thing>();
             public bool IsDirty = false;
         }
 
@@ -28,7 +28,7 @@ namespace Prioritize2
                 if (drawerInt == null)
                 {
                     drawerInt = new CellBoolDrawer(
-                        (int index) => true,
+                        (int index) => priorityGrid[index] != 0,
                         () => Color.white,
                         (int index) => priorityGrid[index].GetPriorityColor(),
                         map.Size.x,
@@ -85,7 +85,8 @@ namespace Prioritize2
 
         public override void MapComponentUpdate()
         {
-            Drawer.MarkForDraw();
+            Drawer.MarkForDraw(); //TEMP
+
             Drawer.CellBoolDrawerUpdate();
         }
 

@@ -103,7 +103,6 @@ namespace Prioritize2
             if (CanPrioritize(thing))
             {
                 SetPriority(thing, 0);
-                Render.RemoveFromCache(thing);
             }
         }
 
@@ -156,6 +155,8 @@ namespace Prioritize2
             {
                 ThingPriority.Add(thing.thingIDNumber, priority);
             }
+
+            Render.ThingPriorityUpdated(thing, priority);
         }
 
         public int GetPriorityOnCell(Map map, IntVec3 cell)

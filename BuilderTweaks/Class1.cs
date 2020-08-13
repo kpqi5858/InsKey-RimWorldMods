@@ -87,6 +87,7 @@ namespace BuilderTweaks
                 RenderCancelHighlights();
             }
         }
+
         IntVec3 PreviousCell = IntVec3.Invalid;
         bool ClickedFlag = false;
         static Texture2D CancelIcon = ContentFinder<Texture2D>.Get("UI/Designators/Cancel", true);
