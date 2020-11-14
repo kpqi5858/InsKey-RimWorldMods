@@ -169,6 +169,7 @@ namespace Prioritize
         public static void Prefix(Designation __instance)
         {
             if (__instance.target == null) return;
+            if (MainMod.save == null) return;
 
             if (__instance.target.HasThing)
             {
