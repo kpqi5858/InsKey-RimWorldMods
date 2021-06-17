@@ -35,9 +35,43 @@ namespace Prioritize2
 
         public static Color GetPriorityColor(this int val)
         {
-            float lerpAlpha = (MainMod.ModConfig.priorityMax - MainMod.ModConfig.priorityMin) / (val - MainMod.ModConfig.priorityMin);
+            Color white = Color.white;
+            Color dest = val >= 0 ? MainMod.ModConfig.HighPriorityColor : MainMod.ModConfig.LowPriorityColor;
 
-            return Color.Lerp(MainMod.ModConfig.LowPriorityColor, MainMod.ModConfig.HighPriorityColor, lerpAlpha);
+            float fVal = val;
+            float alpha = 0;
+            
+            if (val > 0)
+            {
+                alpha = fVal / MainMod.ModConfig.priorityMax;
+            }
+            else if (val < 0)
+            {
+                alpha = fVal / MainMod.ModConfig.priorityMin;
+            }
+
+            return Color.Lerp(white, dest, alpha);
+        }
+
+        public static Color GetPriorityColor_Area(this int val)
+        {
+            Color color = val.GetPriorityColor();
+
+            float fVal = val;
+            float alpha = 0;
+
+            if (val > 0)
+            {
+                alpha = fVal / MainMod.ModConfig.priorityMax;
+            }
+            else if (val < 0)
+            {
+                alpha = fVal / MainMod.ModConfig.priorityMin;
+            }
+
+            color.a = alpha;
+
+            return color;
         }
 
         public static Color FromHex(uint hexColor)
@@ -47,7 +81,30 @@ namespace Prioritize2
             uint b = (hexColor >> 8) & 0x000000ff;
             uint a = (hexColor >> 0) & 0x000000ff;
 
-            return new Color(r, g, b, a);
+            return new Color(r, g, b, a) / 255;
+        }
+
+        public static bool CanAffectedByPriority(this Pawn pawn)
+        {
+            if (pawn == null) return false;
+
+            if (pawn.Faction?.IsPlayer == false) return false;
+
+            if (pawn.RaceProps.Animal && !MainMod.ModConfig.affectAnimals) return false;
+
+            return true;
+        }
+
+        public static void ClampPriority(this ref int priority)
+        {
+            if (priority < MainMod.ModConfig.priorityMin)
+            {
+                priority = MainMod.ModConfig.priorityMin;
+            }
+            if (priority > MainMod.ModConfig.priorityMax)
+            {
+                priority = MainMod.ModConfig.priorityMax;
+            }
         }
     }
 }

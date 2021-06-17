@@ -16,12 +16,21 @@ namespace Prioritize2
 
         public PriorityRender Render = new PriorityRender();
 
-        private PriorityFilter FilterInternal = new PriorityFilter();
+        private PriorityFilter FilterInternal;
+
+        public List<Thing> toDrawLabels = null;
+
+        public List<Thing> toRemovePriority = new List<Thing>();
 
         public PriorityFilter Filter
         {
             get
             {
+                if (FilterInternal == null)
+                {
+                    FilterInternal = PriorityFilter.GetDefaultFilter();
+                }
+
                 return FilterInternal;
             }
             set
@@ -52,13 +61,31 @@ namespace Prioritize2
             Render.MarkDirty(null);
         }
 
-        public override void GameComponentTick()
+        public override void GameComponentUpdate()
         {
-            Render.Tick();
+            Render.Update();
         }
+
         public override void GameComponentOnGUI()
         {
+            if (toDrawLabels != null)
+            {
+                var list = toDrawLabels;
+
+                foreach (Thing t in list)
+                {
+                    int pri = GetPriority(t);
+
+                    GenMapUI.DrawThingLabel(t, pri.ToString(), pri.GetPriorityColor());
+                }
+            }
+
             MousePriorityControl();
+        }
+
+        public override void GameComponentTick()
+        {
+            RemoveDestroyedNow();
         }
 
         //Ctrl+Wheel to select priority
@@ -70,11 +97,25 @@ namespace Prioritize2
 
             if (shouldDo)
             {
-                if (Event.current.type == EventType.ScrollWheel)
+                if (Event.current.type == EventType.ScrollWheel && Input.GetKey(KeyCode.LeftControl))
                 {
                     Event.current.Use();
-                    MainMod.SelectedPriority += Math.Sign(Event.current.delta.y);
+                    MainMod.SelectedPriority -= Math.Sign(Event.current.delta.y);
                     SoundDefOf.Tick_High.PlayOneShotOnCamera(null);
+
+                    MainMod.SelectedPriority.ClampPriority();
+
+                    Vector2 mousePosition = Event.current.mousePosition;
+                    Rect textRect = new Rect(mousePosition.x + 24f, mousePosition.y + 24f, 200f, 9999f);
+
+                    Find.WindowStack.ImmediateWindow("P2_DrawPriority".GetHashCode(), textRect, WindowLayer.GameUI, delegate() 
+                    {
+                        GameFont font = Text.Font;
+                        Text.Font = GameFont.Small;
+                        Widgets.Label(textRect.AtZero(), MainMod.SelectedPriority.ToString());
+                        Text.Font = font;
+                    }
+                    , false, false, 0f);
                 }
             }
         }
@@ -86,7 +127,7 @@ namespace Prioritize2
             {
                 foreach (var thing in map.listerThings.AllThings)
                 {
-                    if (thing.def.HasThingIDNumber && ThingPriority.TryGetValue(thing.thingIDNumber, out int pri))
+                    if (CanPrioritize(thing) && ThingPriority.TryGetValue(thing.thingIDNumber, out int pri))
                     {
                         NewThingPri.Add(thing.thingIDNumber, pri);
                     }
@@ -100,10 +141,31 @@ namespace Prioritize2
         public void ThingDestroyed(Thing thing)
         {
             //Remove priority on it
-            if (CanPrioritize(thing))
+            if (CanPrioritize(thing) && HasPriority(thing))
             {
-                SetPriority(thing, 0);
+                toRemovePriority.Add(thing);
+
+                if (toRemovePriority.Count > 10000)
+                {
+                    Log.Warning("Too many things in toRemovePriority list. Removing..");
+                    RemoveDestroyedNow();
+                }
             }
+        }
+
+        public void RemoveDestroyedNow()
+        {
+            foreach (Thing t in toRemovePriority)
+            {
+                bool result = ThingPriority.Remove(t.thingIDNumber);
+
+                if (result == false)
+                {
+                    Log.ErrorOnce("Thing " + t + " was in toRemovePriority list, but not in ThingPriority.", "P2_TRP".GetHashCode());
+                }
+            }
+
+            toRemovePriority.Clear();
         }
 
         //Can assign a priority to it?
@@ -153,7 +215,7 @@ namespace Prioritize2
             }
             else
             {
-                ThingPriority.Add(thing.thingIDNumber, priority);
+                ThingPriority[thing.thingIDNumber] = priority;
             }
 
             Render.ThingPriorityUpdated(thing, priority);

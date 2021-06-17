@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using RimWorld;
+using UnityEngine;
 using Verse;
 
 namespace Prioritize2.Designation
@@ -18,6 +19,8 @@ namespace Prioritize2.Designation
             defaultDesc = "P2_PrioritizeThingDesc".Translate();
             soundDragSustain = SoundDefOf.Designate_DragStandard;
             soundDragChanged = SoundDefOf.Designate_DragStandard_Changed;
+            soundSucceeded = SoundDefOf.Designate_PlanAdd;
+            icon = ContentFinder<Texture2D>.Get("Prioritize2/UI/ThingPriorityDesignator");
             useMouseIcon = false;
         }
 
@@ -36,13 +39,7 @@ namespace Prioritize2.Designation
 
         public override AcceptanceReport CanDesignateThing(Thing t)
         {
-            //Can't prioritize other faction's things
-            if (t.Faction?.IsPlayer != true) return false;
-
-            //Can't do when fogged
-            if (t.Fogged()) return false;
-
-            return MainMod.Data.Filter.Allows(t) && PriorityData.CanPrioritize(t);
+            return MainMod.Data.Filter.Allows(t);
         }
 
         public override void DesignateSingleCell(IntVec3 c)
@@ -56,6 +53,11 @@ namespace Prioritize2.Designation
         {
             base.DrawMouseAttachments();
             GenUI.DrawMouseAttachment(icon, MainMod.SelectedPriority.ToString(), iconAngle, iconOffset, null);
+        }
+
+        public override void SelectedUpdate()
+        {
+            MainMod.Data.Render.MarkDraw();
         }
 
         public override void DesignateThing(Thing t)

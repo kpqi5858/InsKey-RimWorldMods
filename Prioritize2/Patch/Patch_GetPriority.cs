@@ -5,6 +5,8 @@ using Verse;
 
 namespace Prioritize2.Patch
 {
+    //In vanila, higher priority value means higher priority
+
     //"Safe" patch
     [HarmonyPatch(typeof(WorkGiver_Scanner), "GetPriority", new Type[] { typeof(Pawn), typeof(TargetInfo) })]
     public class Patch_GetPriority
@@ -13,7 +15,7 @@ namespace Prioritize2.Patch
 
         public static void Postfix(Pawn pawn, TargetInfo t, ref float __result, WorkGiver_Scanner __instance)
         {
-            if (!(pawn != null && pawn.Faction?.IsPlayer == true)) return;
+            if (!pawn.CanAffectedByPriority()) return;
 
             Map map = pawn.Map;
 
@@ -24,7 +26,7 @@ namespace Prioritize2.Patch
 
             float modPriority = MainMod.Data.GetPriorityOnCell(map, t.Cell);
 
-            if (t.HasThing)
+            if (t.HasThing && PriorityData.CanPrioritize(t.Thing))
             {
                 modPriority += MainMod.Data.GetPriority(t.Thing);
             }

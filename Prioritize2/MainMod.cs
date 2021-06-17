@@ -8,8 +8,6 @@ namespace Prioritize2
 {
     public class MainMod : Mod
     {
-        public static PrioritizeModSettings ModConfig;
-
         public static PriorityData Data;
 
         public static MainMod Instance;
@@ -18,19 +16,32 @@ namespace Prioritize2
 
         public Harmony harmony;
 
+        private static PrioritizeModSettings modConfigInt;
+
+        public static PrioritizeModSettings ModConfig
+        {
+            get
+            {
+                if (modConfigInt == null)
+                {
+                    modConfigInt = Instance.GetSettings<PrioritizeModSettings>();
+                }
+
+                return modConfigInt;
+            }
+        }
+
         public MainMod(ModContentPack content) : base(content)
         {
             Instance = this;
 
             harmony = new Harmony("InsertKey.Prioritize2");
             harmony.PatchAll();
-
-            ModConfig = GetSettings<PrioritizeModSettings>();
         }
 
         public override string SettingsCategory()
         {
-            return "Prioritize 2";
+            return "P2_ModName".Translate();
         }
 
         public override void DoSettingsWindowContents(Rect inRect)

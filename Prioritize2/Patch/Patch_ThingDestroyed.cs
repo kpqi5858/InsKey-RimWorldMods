@@ -9,7 +9,7 @@ namespace Prioritize2.Patch
     [HarmonyPatch(typeof(Thing), "Destroy")]
     public class Patch_ThingDestroyed
     {
-        public static void Prefix(Thing __instance)
+        public static void Postfix(Thing __instance)
         {
             //null?
             MainMod.Data?.ThingDestroyed(__instance);

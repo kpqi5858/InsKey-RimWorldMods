@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using RimWorld;
+using UnityEngine;
 using Verse;
 
 namespace Prioritize2.Designation
@@ -20,6 +21,8 @@ namespace Prioritize2.Designation
             defaultDesc = "P2_PrioritizeZoneDesc".Translate();
             soundDragSustain = SoundDefOf.Designate_DragStandard;
             soundDragChanged = SoundDefOf.Designate_DragStandard_Changed;
+            soundSucceeded = SoundDefOf.Designate_PlanAdd;
+            icon = ContentFinder<Texture2D>.Get("Prioritize2/UI/ZonePriorityDesignator");
             useMouseIcon = true;
         }
 

@@ -9,15 +9,51 @@ namespace Prioritize2
 {
     public class PrioritizeModSettings : ModSettings
     {
+        public class BannedWorkGiverEntry : IExposable
+        {
+            public string typeName;
+            public string description;
+
+            private BannedWorkGiverEntry()
+            {
+
+            }
+
+            public static BannedWorkGiverEntry GetBannedWorkGiverEntry(string typeName, string description)
+            {
+                var result = new BannedWorkGiverEntry();
+
+                result.typeName = typeName;
+                result.description = description;
+
+                return result;
+            }
+
+            public static IEnumerable<BannedWorkGiverEntry> GetDefaultEntries()
+            {
+                yield return GetBannedWorkGiverEntry(typeof(WorkGiver_RemoveRoof).FullName, "P2_BannedRemoveRoof".Translate());
+            }
+
+            public void ExposeData()
+            {
+                Scribe_Values.Look(ref typeName, "typeName");
+                Scribe_Values.Look(ref description, "description");
+            }
+        }
+
         //Subclass of Workgiver_Scanner
-        private List<Type> NoPriorityPatchOn = new List<Type>();
+        public List<BannedWorkGiverEntry> NoPriorityPatchOnEntries = new List<BannedWorkGiverEntry>();
+        private List<Type> NoPriorityPatchOnInt;
+        private bool NoPriorityPatchOnCacheDirty = true;
 
         //R, G, B, A
         private uint lowPriorityColorHex = 0xff0000ff;
         private uint highPriorityColorHex = 0x00ff00ff;
 
-        public int priorityMax = 10;
-        public int priorityMin = -10;
+        public int priorityMax = 5;
+        public int priorityMin = -5;
+
+        public bool affectAnimals = false;
 
         public Color LowPriorityColor
         {
@@ -43,17 +79,43 @@ namespace Prioritize2
             }
         }
 
+        public List<Type> NoPriorityPatchOnTypes
+        {
+            get
+            {
+                if (NoPriorityPatchOnCacheDirty)
+                {
+                    NoPriorityPatchOnCacheDirty = false;
+
+                    NoPriorityPatchOnInt = new List<Type>();
+
+                    foreach (var entry in NoPriorityPatchOnEntries)
+                    {
+                        Type type = GenTypes.GetTypeInAnyAssembly(entry.typeName);
+
+                        if (type != null)
+                        {
+                            NoPriorityPatchOnInt.Add(type);
+                        }
+                    }
+                }
+
+                return NoPriorityPatchOnInt;
+            }
+        }
         public PrioritizeModSettings()
         {
-            //Set default values
+            ResetNoPriorityPatchOnEntries();
+        }
 
-            //Modifing priority on it can cause pawns to remove wrong roofs,
-            NoPriorityPatchOn.Add(typeof(WorkGiver_RemoveRoof));
+        public void ResetNoPriorityPatchOnEntries()
+        {
+            NoPriorityPatchOnEntries = BannedWorkGiverEntry.GetDefaultEntries().ToList();
         }
 
         public bool IsPatchAllowed(Type type)
         {
-            return NoPriorityPatchOn.Contains(type);
+            return !NoPriorityPatchOnTypes.Contains(type);
         }
 
         public void DoSettingsWindow(Rect rect)
@@ -63,41 +125,18 @@ namespace Prioritize2
 
         public override void ExposeData()
         {
-            List<string> typesString = new List<string>();
-
-            if (Scribe.mode == LoadSaveMode.Saving)
-            {
-                foreach (var type in NoPriorityPatchOn)
-                {
-                    typesString.Add(type.FullName);
-                }
-            }
-
-            Scribe_Collections.Look(ref typesString, "bannedworkgivers");
-
-            if (Scribe.mode == LoadSaveMode.LoadingVars)
-            {
-                NoPriorityPatchOn.Clear();
-
-                foreach (var str in typesString)
-                {
-                    Type type = GenTypes.GetTypeInAnyAssembly(str);
-                    if (type == null)
-                    {
-                        Log.Warning("Cannot find type for : " + str + ". Ignoring.");
-                    }
-                    else
-                    {
-                        NoPriorityPatchOn.Add(type);
-                    }
-                }
-            }
+            Scribe_Collections.Look(ref NoPriorityPatchOnEntries, "bannedworkgivers");
 
             Scribe_Values.Look(ref lowPriorityColorHex, "lowPriorityColor", lowPriorityColorHex);
             Scribe_Values.Look(ref highPriorityColorHex, "highPriorityColor", highPriorityColorHex);
 
             Scribe_Values.Look(ref priorityMax, "priorityMax", priorityMax);
             Scribe_Values.Look(ref priorityMin, "priorityMin", priorityMin);
+
+            Scribe_Values.Look(ref affectAnimals, "affectAnimals", affectAnimals);
+
+
+            NoPriorityPatchOnCacheDirty = true;
         }
     }
 }

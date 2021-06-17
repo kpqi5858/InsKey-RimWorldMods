@@ -32,8 +32,9 @@ namespace Prioritize2
                         () => Color.white,
                         (int index) => priorityGrid[index].GetPriorityColor(),
                         map.Size.x,
-                        map.Size.y,
-                        3625);
+                        map.Size.z,
+                        3625,
+                        0.2f);
                 }
                 return drawerInt;
             }
@@ -85,8 +86,6 @@ namespace Prioritize2
 
         public override void MapComponentUpdate()
         {
-            Drawer.MarkForDraw(); //TEMP
-
             Drawer.CellBoolDrawerUpdate();
         }
 
