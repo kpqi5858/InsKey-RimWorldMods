@@ -6,8 +6,6 @@ using RimWorld;
 
 namespace Prioritize2
 {
-    //It's very weird way for substituting this as original WorkGivers
-    //But idk
     public class WorkGiver_ConstructUniversal : WorkGiver_ConstructDeliverResources
     {
         public override ThingRequest PotentialWorkThingRequest => ThingRequest.ForGroup(ThingRequestGroup.Construction);
@@ -31,6 +29,7 @@ namespace Prioritize2
             return Danger.Deadly;
         }
 
+        //It's very weird way of substituting this as original WorkGivers..But idk
         public override Job JobOnThing(Pawn pawn, Thing t, bool forced)
         {
             if (originalDef == null)

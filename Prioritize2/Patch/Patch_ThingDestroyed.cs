@@ -11,7 +11,7 @@ namespace Prioritize2.Patch
     {
         public static void Postfix(Thing __instance)
         {
-            //null?
+            //null? <-- GameComponent could hadn't loaded yet
             MainMod.Data?.ThingDestroyed(__instance);
         }
     }
