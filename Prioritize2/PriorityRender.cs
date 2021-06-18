@@ -10,12 +10,11 @@ namespace Prioritize2
     [StaticConstructorOnStartup]
     public class PriorityRender
     {
-        public bool AnyDirty
-        {
-            get; private set;
-        }
+        private bool anyDirty = false;
 
         private bool markedDraw = false;
+
+        public List<Thing> toDrawLabels = null;
 
         //If null, mark all maps dirty
         public void MarkDirty(Map map)
@@ -31,7 +30,7 @@ namespace Prioritize2
             {
                 map.GetPriorityData().RenderCache.IsDirty = true;
             }
-            AnyDirty = true;
+            anyDirty = true;
         }
 
         public void Recalculate()
@@ -49,8 +48,6 @@ namespace Prioritize2
 
         private void RecalculateInternal()
         {
-            var data = MainMod.Data;
-
             var dirtymaps = from map in Find.Maps where map.GetPriorityData().RenderCache.IsDirty select map;
             int count = dirtymaps.Count();
 
@@ -63,14 +60,14 @@ namespace Prioritize2
 
                 foreach (var thing in map.listerThings.AllThings)
                 {
-                    if (MainMod.Data.Filter.Allows(thing) && MainMod.Data.HasPriority(thing))
+                    if (MainMod.Data.ViewFilter.Allows(thing) && MainMod.Data.HasPriority(thing))
                     {
                         priCache.ThingCache.Add(thing);
                     }
                 }
             }
 
-            if (AnyDirty == false)
+            if (!anyDirty)
             {
                 Log.Warning("Recalculate called with AnyDirty = false");
             }
@@ -79,7 +76,7 @@ namespace Prioritize2
                 Log.Warning("Recalculate called but there's no dirty map caches.");
             }
 
-            AnyDirty = false;
+            anyDirty = false;
         }
 
         public void ThingPriorityUpdated(Thing t, int newPriority)
@@ -94,7 +91,7 @@ namespace Prioritize2
             }
             else
             {
-                bool matchesFilter = MainMod.Data.Filter.Allows(t);
+                bool matchesFilter = MainMod.Data.ViewFilter.Allows(t);
 
                 if (matchesFilter)
                 {
@@ -118,7 +115,7 @@ namespace Prioritize2
             if (Find.Maps.NullOrEmpty()) return;
 
             //If Priority Marks is being rendered and AnyDirty
-            if (markedDraw && AnyDirty)
+            if (markedDraw && anyDirty)
             {
                 Recalculate();
             }
@@ -130,7 +127,22 @@ namespace Prioritize2
             }
             else
             {
-                MainMod.Data.toDrawLabels = null;
+                toDrawLabels = null;
+            }
+        }
+
+        public void OnGUI()
+        {
+            if (toDrawLabels != null)
+            {
+                var list = toDrawLabels;
+
+                foreach (Thing t in list)
+                {
+                    int pri = MainMod.Data.GetPriority(t);
+
+                    GenMapUI.DrawThingLabel(t, pri.ToString(), pri.GetPriorityColor());
+                }
             }
         }
 
@@ -148,7 +160,7 @@ namespace Prioritize2
             cameraRect.ClipInsideMap(map);
             cameraRect = cameraRect.ExpandedBy(1);
 
-            List<Thing> toDrawLabels = new List<Thing>();
+            List<Thing> newDrawLabels = new List<Thing>();
 
             foreach (Thing t in map.GetPriorityData().RenderCache.ThingCache)
             {
@@ -162,12 +174,12 @@ namespace Prioritize2
 
                     if (mouseAt.DistanceTo(pos) < 9f)
                     {
-                        toDrawLabels.Add(t);
+                        newDrawLabels.Add(t);
                     }
                 }
             }
 
-            MainMod.Data.toDrawLabels = toDrawLabels;
+            toDrawLabels = newDrawLabels;
         }
 
         public static readonly Material PriorityThingOverlayMat = MaterialPool.MatFrom("Prioritize2/UI/PriorityThingOverlay", ShaderDatabase.MetaOverlay);

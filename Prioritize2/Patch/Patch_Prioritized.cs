@@ -11,9 +11,11 @@ namespace Prioritize2.Patch
     {
         public static bool Prefix(WorkGiver_Scanner __instance, ref bool __result)
         {
-            __result = MainMod.ModConfig.IsPatchAllowed(__instance.GetType());
+            bool isPatchAllowed = MainMod.ModConfig.IsPatchAllowed(__instance.GetType());
 
-            return false;
+            __result = isPatchAllowed;
+
+            return !isPatchAllowed;
         }
     }
 }

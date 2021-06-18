@@ -97,7 +97,7 @@ namespace Prioritize2
             {
                 if (priorityGrid == null || priorityGrid.Length != map.cellIndices.NumGridCells)
                 {
-                    Log.Error("PriorityMapGrid : Invalid priorityGrid. fixing..");
+                    Log.Error("PriorityMapGrid : Invalid priorityGrid. Resetting..");
                     InitGrid();
                 }
                 arr = DataSerializeUtility.SerializeInt(priorityGrid);

@@ -21,7 +21,6 @@ namespace Prioritize2.Designation
             soundDragChanged = SoundDefOf.Designate_DragStandard_Changed;
             soundSucceeded = SoundDefOf.Designate_PlanAdd;
             icon = ContentFinder<Texture2D>.Get("Prioritize2/UI/ThingPriorityDesignator");
-            useMouseIcon = false;
         }
 
         public override AcceptanceReport CanDesignateCell(IntVec3 loc)
@@ -39,7 +38,7 @@ namespace Prioritize2.Designation
 
         public override AcceptanceReport CanDesignateThing(Thing t)
         {
-            return MainMod.Data.Filter.Allows(t);
+            return MainMod.Data.AssignFilter.Allows(t);
         }
 
         public override void DesignateSingleCell(IntVec3 c)
@@ -48,11 +47,6 @@ namespace Prioritize2.Designation
             {
                 if (CanDesignateThing(thing).Accepted) DesignateThing(thing);
             }
-        }
-        public override void DrawMouseAttachments()
-        {
-            base.DrawMouseAttachments();
-            GenUI.DrawMouseAttachment(icon, MainMod.SelectedPriority.ToString(), iconAngle, iconOffset, null);
         }
 
         public override void SelectedUpdate()

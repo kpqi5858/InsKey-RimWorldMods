@@ -23,7 +23,6 @@ namespace Prioritize2.Designation
             soundDragChanged = SoundDefOf.Designate_DragStandard_Changed;
             soundSucceeded = SoundDefOf.Designate_PlanAdd;
             icon = ContentFinder<Texture2D>.Get("Prioritize2/UI/ZonePriorityDesignator");
-            useMouseIcon = true;
         }
 
         public override AcceptanceReport CanDesignateCell(IntVec3 loc)
@@ -45,12 +44,6 @@ namespace Prioritize2.Designation
         public override void RenderHighlight(List<IntVec3> dragCells)
         {
             DesignatorUtility.RenderHighlightOverSelectableCells(this, dragCells);
-        }
-
-        public override void DrawMouseAttachments()
-        {
-            base.DrawMouseAttachments();
-            GenUI.DrawMouseAttachment(icon, MainMod.SelectedPriority.ToString(), iconAngle, iconOffset, null);
         }
 
         public override void SelectedUpdate()

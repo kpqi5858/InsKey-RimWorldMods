@@ -16,26 +16,42 @@ namespace Prioritize2
 
         public PriorityRender Render = new PriorityRender();
 
-        private PriorityFilter FilterInternal;
-
-        public List<Thing> toDrawLabels = null;
+        private PriorityFilter assignFilerInt;
+        private PriorityFilter viewFilterInt;
 
         public List<Thing> toRemovePriority = new List<Thing>();
 
-        public PriorityFilter Filter
+        public PriorityFilter AssignFilter
         {
             get
             {
-                if (FilterInternal == null)
+                if (assignFilerInt == null)
                 {
-                    FilterInternal = PriorityFilter.GetDefaultFilter();
+                    assignFilerInt = PriorityFilter.GetDefaultFilter();
                 }
 
-                return FilterInternal;
+                return assignFilerInt;
             }
             set
             {
-                FilterInternal = value;
+                assignFilerInt = value;
+            }
+        }
+
+        public PriorityFilter ViewFilter
+        {
+            get
+            {
+                if (viewFilterInt == null)
+                {
+                    viewFilterInt = PriorityFilter.GetDefaultFilter();
+                }
+
+                return viewFilterInt;
+            }
+            set
+            {
+                viewFilterInt = value;
 
                 Render.MarkDirty(null);
             }
@@ -50,7 +66,7 @@ namespace Prioritize2
         {
             base.ExposeData();
             Scribe_Collections.Look(ref ThingPriority, "thingPriority", LookMode.Value, LookMode.Value);
-            Scribe_Deep.Look(ref FilterInternal, "priorityFilter");
+            Scribe_Deep.Look(ref viewFilterInt, "priorityFilter");
         }
 
         public override void FinalizeInit()
@@ -68,17 +84,9 @@ namespace Prioritize2
 
         public override void GameComponentOnGUI()
         {
-            if (toDrawLabels != null)
-            {
-                var list = toDrawLabels;
+            Render.OnGUI();
 
-                foreach (Thing t in list)
-                {
-                    int pri = GetPriority(t);
-
-                    GenMapUI.DrawThingLabel(t, pri.ToString(), pri.GetPriorityColor());
-                }
-            }
+            
 
             MousePriorityControl();
         }
@@ -104,19 +112,23 @@ namespace Prioritize2
                     SoundDefOf.Tick_High.PlayOneShotOnCamera(null);
 
                     MainMod.SelectedPriority.ClampPriority();
-
-                    Vector2 mousePosition = Event.current.mousePosition;
-                    Rect textRect = new Rect(mousePosition.x + 24f, mousePosition.y + 24f, 200f, 9999f);
-
-                    Find.WindowStack.ImmediateWindow("P2_DrawPriority".GetHashCode(), textRect, WindowLayer.GameUI, delegate() 
-                    {
-                        GameFont font = Text.Font;
-                        Text.Font = GameFont.Small;
-                        Widgets.Label(textRect.AtZero(), MainMod.SelectedPriority.ToString());
-                        Text.Font = font;
-                    }
-                    , false, false, 0f);
                 }
+
+                Vector2 mousePosition = Event.current.mousePosition;
+                Rect textRect = new Rect(mousePosition.x + 24f, mousePosition.y + 24f, 200f, 9999f);
+
+                Find.WindowStack.ImmediateWindow("P2_DrawPriority".GetHashCode(), textRect, WindowLayer.GameUI, delegate ()
+                {
+                    int selectedPri = MainMod.SelectedPriority;
+
+                    GameFont font = Text.Font;
+                    Text.Font = GameFont.Small;
+                    GUI.color = selectedPri.GetPriorityColor();
+                    Widgets.Label(textRect.AtZero(), MainMod.SelectedPriority.ToString());
+                    Text.Font = font;
+                    GUI.color = Color.white;
+                }
+                , false, false, 0f);
             }
         }
 
@@ -155,8 +167,10 @@ namespace Prioritize2
 
         public void RemoveDestroyedNow()
         {
-            foreach (Thing t in toRemovePriority)
+            for (int i = 0; i < toRemovePriority.Count; i++)
             {
+                Thing t = toRemovePriority[i];
+
                 bool result = ThingPriority.Remove(t.thingIDNumber);
 
                 if (result == false)

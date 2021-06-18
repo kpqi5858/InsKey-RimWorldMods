@@ -7,40 +7,8 @@ using UnityEngine;
 
 namespace Prioritize2
 {
-    public class PrioritizeModSettings : ModSettings
+    public partial class PrioritizeModSettings : ModSettings
     {
-        public class BannedWorkGiverEntry : IExposable
-        {
-            public string typeName;
-            public string description;
-
-            private BannedWorkGiverEntry()
-            {
-
-            }
-
-            public static BannedWorkGiverEntry GetBannedWorkGiverEntry(string typeName, string description)
-            {
-                var result = new BannedWorkGiverEntry();
-
-                result.typeName = typeName;
-                result.description = description;
-
-                return result;
-            }
-
-            public static IEnumerable<BannedWorkGiverEntry> GetDefaultEntries()
-            {
-                yield return GetBannedWorkGiverEntry(typeof(WorkGiver_RemoveRoof).FullName, "P2_BannedRemoveRoof".Translate());
-            }
-
-            public void ExposeData()
-            {
-                Scribe_Values.Look(ref typeName, "typeName");
-                Scribe_Values.Look(ref description, "description");
-            }
-        }
-
         //Subclass of Workgiver_Scanner
         public List<BannedWorkGiverEntry> NoPriorityPatchOnEntries = new List<BannedWorkGiverEntry>();
         private List<Type> NoPriorityPatchOnInt;
@@ -50,10 +18,17 @@ namespace Prioritize2
         private uint lowPriorityColorHex = 0xff0000ff;
         private uint highPriorityColorHex = 0x00ff00ff;
 
+        //TODO print warning messages if theese values are huge
         public int priorityMax = 5;
         public int priorityMin = -5;
 
         public bool affectAnimals = false;
+
+        public bool patchGenClosest = false;
+
+        //Multiplied to custom priority value
+        //Can cause mod compatiblity issues if value is high. Can cause prioritizing doesn't work properly if value is too low
+        public float priorityMultiplier = 0.1f;
 
         public Color LowPriorityColor
         {
@@ -71,14 +46,6 @@ namespace Prioritize2
             }
         }
 
-        public IEnumerable<Type> AllWGScannerType
-        {
-            get
-            {
-                return from def in DefDatabase<WorkGiverDef>.AllDefs where def.giverClass.IsSubclassOf(typeof(WorkGiver_Scanner)) select def.giverClass;
-            }
-        }
-
         public List<Type> NoPriorityPatchOnTypes
         {
             get
@@ -91,12 +58,14 @@ namespace Prioritize2
 
                     foreach (var entry in NoPriorityPatchOnEntries)
                     {
-                        Type type = GenTypes.GetTypeInAnyAssembly(entry.typeName);
+                        Type type = entry.GetTypeIfEnabled();
 
                         if (type != null)
                         {
                             NoPriorityPatchOnInt.Add(type);
                         }
+
+                        //Log.Message(entry.ToString());
                     }
                 }
 
@@ -135,6 +104,9 @@ namespace Prioritize2
 
             Scribe_Values.Look(ref affectAnimals, "affectAnimals", affectAnimals);
 
+            Scribe_Values.Look(ref patchGenClosest, "patchGenClosest", patchGenClosest);
+
+            Scribe_Values.Look(ref priorityMultiplier, "priorityMultiplier", priorityMultiplier);
 
             NoPriorityPatchOnCacheDirty = true;
         }
