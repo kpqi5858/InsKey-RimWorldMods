@@ -27,7 +27,7 @@ namespace Prioritize2
         public bool patchGenClosest = false;
 
         //Multiplied to custom priority value
-        //Can cause mod compatiblity issues if value is high. Can cause prioritizing doesn't work properly if value is too low
+        //Can cause mod compatiblity issues if value is high. Can cause prioritizing doesn't work well if value is too low
         public float priorityMultiplier = 0.1f;
 
         public Color LowPriorityColor

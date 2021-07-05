@@ -23,6 +23,7 @@ namespace Prioritize2.Designation
             soundDragChanged = SoundDefOf.Designate_DragStandard_Changed;
             soundSucceeded = SoundDefOf.Designate_PlanAdd;
             icon = ContentFinder<Texture2D>.Get("Prioritize2/UI/ZonePriorityDesignator");
+            useMouseIcon = false;
         }
 
         public override AcceptanceReport CanDesignateCell(IntVec3 loc)
