@@ -37,6 +37,8 @@ namespace Prioritize2
                 originalDef = def;
             }
 
+            WorkGiverDef failDef = null;
+
             foreach (var wgiver in CheckList)
             {
                 var res = wgiver.JobOnThing(pawn, t, forced);
@@ -46,9 +48,14 @@ namespace Prioritize2
                     def = wgiver.def;
                     return res;
                 }
+                else
+                {
+                    failDef = wgiver.def;
+                }
             }
 
-            def = originalDef;
+            def = failDef;
+
             return null;
         }
     }

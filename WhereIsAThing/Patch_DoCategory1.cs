@@ -69,7 +69,7 @@ namespace ItemListSelector
             {
                 return result;
             }
-            Log.Error("[ILS Patch_DoCategory1] Looked for nonexistent key " + rDef + " in counted resources.", false);
+            Log.Error("[ILS Patch_DoCategory1] Looked for nonexistent key " + rDef + " in counted resources.");
             countedAmounts.Add(rDef, 0);
             return 0;
         }

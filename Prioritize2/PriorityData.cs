@@ -86,8 +86,6 @@ namespace Prioritize2
         {
             Render.OnGUI();
 
-            
-
             MousePriorityControl();
         }
 
@@ -159,7 +157,7 @@ namespace Prioritize2
 
                 if (toRemovePriority.Count > 10000)
                 {
-                    Log.Warning("Too many things in toRemovePriority list. Removing..");
+                    Log.Warning("Too many things in toRemovePriority list. Removing now..");
                     RemoveDestroyedNow();
                 }
             }

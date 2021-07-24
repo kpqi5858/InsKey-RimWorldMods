@@ -124,6 +124,7 @@ namespace Prioritize2
             if (markedDraw)
             {
                 RenderPriorityMarks();
+                markedDraw = false;
             }
             else
             {
@@ -148,8 +149,6 @@ namespace Prioritize2
 
         public void RenderPriorityMarks()
         {
-            markedDraw = false;
-
             if (Find.CurrentMap == null) return;
 
             Map map = Find.CurrentMap;

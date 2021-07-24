@@ -7,7 +7,7 @@ namespace ItemListSelector
     {
         public override Vector2 InitialSize => new Vector2(400, 650);
 
-        private Vector2 scrollPosition;
+        private ThingFilterUI.UIState thingFilterState = new ThingFilterUI.UIState();
 
         public Dialog_LoadoutFilter()
         {
@@ -23,7 +23,7 @@ namespace ItemListSelector
             int OpenMask = 9;
             float yOffset = 10;
 
-            ThingFilterUI.DoThingFilterConfigWindow(new Rect(inRect.x, inRect.y + yOffset, inRect.width, inRect.height - yOffset), ref scrollPosition, modSave.CategoryFilter, modSave.CategoryFilterGlobal, OpenMask);
+            ThingFilterUI.DoThingFilterConfigWindow(new Rect(inRect.x, inRect.y + yOffset, inRect.width, inRect.height - yOffset), thingFilterState, modSave.CategoryFilter, modSave.CategoryFilterGlobal, OpenMask);
         }
     }
 }
