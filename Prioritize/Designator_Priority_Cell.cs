@@ -23,7 +23,7 @@ namespace Prioritize
 
         public override void DesignateSingleCell(IntVec3 c)
         {
-            MainMod.save.GetOrCreatePriorityMapData(Map).SetPriorityAt(c, MainMod.SelectedPriority);
+            MainMod.save.GetPriorityMapData(Map).SetPriorityAt(c, MainMod.SelectedPriority);
         }
 
         public override void RenderHighlight(List<IntVec3> dragCells)

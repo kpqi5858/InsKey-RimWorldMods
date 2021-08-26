@@ -50,8 +50,6 @@ namespace Prioritize
         public override void MapLoaded(Map map)
         {
             base.MapLoaded(map);
-            //save.ClearThingPriorities(map);
-            save.ResolvePriorityGridMaps(Find.Maps.IndexOf(map));
         }
 
         public override void Tick(int currentTick)
@@ -103,7 +101,7 @@ namespace Prioritize
                     if (PriorityDraw == PriorityDrawMode.Cell)
                     {
                         Vector3 v = GenMapUI.LabelDrawPosFor(intVec);
-                        int p = save.GetOrCreatePriorityMapData(map).GetPriorityAt(intVec);
+                        int p = save.GetPriorityMapData(map).GetPriorityAt(intVec);
                         if (p == 0) continue;
                         DrawThingLabel(v, p.ToString(), GetPriorityDrawColor(true, p));
                     }

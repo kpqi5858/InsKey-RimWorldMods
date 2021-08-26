@@ -3,30 +3,21 @@ using Verse;
 
 namespace Prioritize
 {
-    public class PriorityMapData : IExposable
+    public class PriorityMapData : MapComponent
     {
         ushort[] priorityGrid = { };
-        public Map map;
-        public int mapId;
         int numCells = 0;
         byte[] griddata;
 
         public PriorityMapData(Map map)
+            : base(map)
         {
-            this.map = map;
-            mapId = Find.Maps.IndexOf(map);
             priorityGrid = new ushort[map.cellIndices.NumGridCells];
             for (int i = 0; i < priorityGrid.Length; i++)
             {
                 priorityGrid[i] = 32768;
             }
         }
-
-        public PriorityMapData()
-        {
-
-        }
-
 
         public short GetPriorityAt(IntVec3 loc)
         {
@@ -43,9 +34,8 @@ namespace Prioritize
             priorityGrid[map.cellIndices.CellToIndex(loc)] = (ushort)(pri + 32768);
         }
 
-        public void ExposeData()
+        public override void ExposeData()
         {
-            Scribe_Values.Look<int>(ref mapId, "mapid", -1);
             if (map != null) numCells = map.cellIndices.NumGridCells;
 
             Scribe_Values.Look<int>(ref numCells, "numCells", 0);

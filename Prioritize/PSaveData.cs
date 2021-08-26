@@ -7,7 +7,6 @@ namespace Prioritize
 
     public class PSaveData : GameComponent
     {
-        public Dictionary<int, PriorityMapData> PriorityMapDataDict = new Dictionary<int, PriorityMapData>();
         public Dictionary<int, int> ThingPriority = new Dictionary<int, int>();
 
         public PSaveData() {  }
@@ -54,16 +53,15 @@ namespace Prioritize
             else if (p == 0) return;
             else ThingPriority.Add(t.thingIDNumber, p);
         }
-        public PriorityMapData GetOrCreatePriorityMapData(Map m)
+        public PriorityMapData GetPriorityMapData(Map m)
         {
             if (m == null)
             {
                 Log.Error("GetOrCreatePriorityMapData called with null Map.");
                 return null;
             }
-            if (PriorityMapDataDict.TryGetValue(Find.Maps.IndexOf(m), out PriorityMapData grid)) return grid;
-            PriorityMapData pg = new PriorityMapData(m);
-            PriorityMapDataDict.Add(Find.Maps.IndexOf(m), pg); return pg;
+
+            return m.GetComponent<PriorityMapData>();
         }
 
         public void ClearUnusedThingPriority()
@@ -83,15 +81,7 @@ namespace Prioritize
         public override void ExposeData()
         {
             base.ExposeData();
-            Scribe_Collections.Look<int, PriorityMapData>(ref PriorityMapDataDict, "prioritymapdata", LookMode.Value, LookMode.Deep);
             Scribe_Collections.Look<int, int>(ref ThingPriority, "thingPriority", LookMode.Value, LookMode.Value);
-        }
-
-        public void ResolvePriorityGridMaps(int mapid)
-        {
-            var grid = GetOrCreatePriorityMapData(Find.Maps[mapid]);
-            //if (grid == null) throw new Exception("wtf");
-            grid.map = Find.Maps[grid.mapId];
         }
     }
 }

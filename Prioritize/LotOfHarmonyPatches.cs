@@ -18,7 +18,7 @@ namespace Prioritize
             float pr = (MainMod.save.TryGetThingPriority(t, out int pri) ? pri : 0);
             if (t.Map != null && t.Position.InBounds(t.Map))
             {
-                pr += MainMod.save.GetOrCreatePriorityMapData(t.Map).GetPriorityAt(t.Position);
+                pr += MainMod.save.GetPriorityMapData(t.Map).GetPriorityAt(t.Position);
             }
 
             if (MainMod.UseLowerAsHighPriority.Value) pr = -pr;
@@ -104,7 +104,7 @@ namespace Prioritize
             {
                 priority += MainMod.save.TryGetThingPriority(t.Thing, out int pri) ? pri + 0.1f : 0;
             }
-            priority += MainMod.save.GetOrCreatePriorityMapData(m).GetPriorityAt(t.Cell);
+            priority += MainMod.save.GetPriorityMapData(m).GetPriorityAt(t.Cell);
 
             if (MainMod.UseLowerAsHighPriority.Value)
             {
