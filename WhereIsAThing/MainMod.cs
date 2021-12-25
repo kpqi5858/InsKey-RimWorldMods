@@ -28,7 +28,8 @@ namespace ItemListSelector
             {
                 Logger.Message(s);
             }
-            
+
+            Compat_ToggleableReadouts.PatchIfNeeded(HarmonyInst);
             /*
             if (ModLister.GetActiveModWithIdentifier("CodeOptimist.CustomThingFilters") != null)
             {

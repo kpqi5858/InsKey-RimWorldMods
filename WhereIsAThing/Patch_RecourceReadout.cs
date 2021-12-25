@@ -14,7 +14,7 @@ namespace ItemListSelector
         public static void Postfix(ThingDef thingDef, int nestLevel, Listing_ResourceReadout __instance)
         {
             ModLogger l = MainMod.logger;
-            if (Event.current.type == EventType.MouseUp && Event.current.button == 0)
+            if (Event.current.button == 0 && Event.current.type == EventType.MouseUp)
             {
                 try
                 {
@@ -26,6 +26,7 @@ namespace ItemListSelector
                     if (!Mouse.IsOver(rect)) return;
                 }
                 catch (Exception e) { l.ReportException(e); return; }
+
                 Event.current.Use();
                 MainMod.SelectThisInStorage(thingDef, Find.CurrentMap);
             }

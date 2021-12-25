@@ -10,7 +10,7 @@ namespace ItemListSelector
     {
         public static void Postfix(float x, float y, ThingDef thingDef)
         {
-            if (Event.current.type == EventType.MouseUp && Event.current.button == 0)
+            if (Event.current.button == 0 && Event.current.type == EventType.MouseUp)
             {
                 if (!Mouse.IsOver(new Rect(x, y, 50f, 27f)))
                 {
