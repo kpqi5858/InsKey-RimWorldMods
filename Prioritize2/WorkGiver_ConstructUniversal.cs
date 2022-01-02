@@ -30,8 +30,11 @@ namespace Prioritize2
         }
 
         //It's very weird way of substituting this as original WorkGivers..But idk
+        //Much better than old Prioritize. Because it handles "def" while old one doesn't
         public override Job JobOnThing(Pawn pawn, Thing t, bool forced)
         {
+            if (!MainMod.ModConfig.universalConstructWorkgiver) return null;
+
             if (originalDef == null)
             {
                 originalDef = def;

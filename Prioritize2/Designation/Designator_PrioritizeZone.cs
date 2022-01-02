@@ -31,14 +31,11 @@ namespace Prioritize2.Designation
             return loc.InBounds(Map);
         }
 
-        public override void DesignateMultiCell(IEnumerable<IntVec3> cells)
+        public override void DesignateSingleCell(IntVec3 loc)
         {
-            foreach (var loc in cells)
+            if (loc.InBounds(Map))
             {
-                if (loc.InBounds(Map))
-                {
-                    MainMod.Data.SetPriorityOnCell(Map, loc, MainMod.SelectedPriority);
-                }
+                MainMod.Data.SetPriorityOnCell(Map, loc, MainMod.SelectedPriority);
             }
         }
 

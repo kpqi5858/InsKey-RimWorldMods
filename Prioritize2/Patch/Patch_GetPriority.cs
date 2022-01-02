@@ -13,18 +13,21 @@ namespace Prioritize2.Patch
     {
         public static void Postfix(Pawn pawn, TargetInfo t, ref float __result, WorkGiver_Scanner __instance)
         {
-            if (!__instance.Prioritized || !pawn.CanAffectedByPriority()) return;
+            if (MainMod.ModConfig.patchGenClosest) return;
 
-            Map map = pawn.Map;
-
+            //__instance.Prioritized may return true even if it's in no patch list because we give control back in Patch_Prioritized
+            if (!MainMod.ModConfig.IsPatchAllowed(__instance.GetType()) || !pawn.CanAffectedByPriority()) return;
+            
+            Map map = pawn.Map ?? t.Map;
+            //Is this possible to have both null map for pwan and target??
             if (map == null)
             {
-                map = t.Map;
+                return;
             }
 
             float modPriority = MainMod.Data.GetPriorityOnCell(map, t.Cell);
 
-            if (t.HasThing && !MainMod.ModConfig.patchGenClosest && PriorityData.CanPrioritize(t.Thing))
+            if (t.HasThing && PriorityData.CanPrioritize(t.Thing))
             {
                 modPriority += MainMod.Data.GetPriority(t.Thing);
             }

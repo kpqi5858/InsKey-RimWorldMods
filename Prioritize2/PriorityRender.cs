@@ -31,10 +31,17 @@ namespace Prioritize2
                 map.GetPriorityData().RenderCache.IsDirty = true;
             }
             anyDirty = true;
+            Log.Message($"Mark dirty called with map={map}");
         }
 
         public void Recalculate()
         {
+            Log.Message("[Prioritize2] PriorityRender.Recalculate() called");
+            if (!anyDirty)
+            {
+                Log.Warning("Recalculate called with AnyDirty = false");
+            }
+
             LongEventHandler.QueueLongEvent(
                 RecalculateInternal, 
                 "P2_Recalculate".Translate(), 
@@ -44,6 +51,8 @@ namespace Prioritize2
                     Log.Error("Exception while recalculating priority render : " + e);
                 },
                 false);
+
+            anyDirty = false;
         }
 
         private void RecalculateInternal()
@@ -67,16 +76,10 @@ namespace Prioritize2
                 }
             }
 
-            if (!anyDirty)
-            {
-                Log.Warning("Recalculate called with AnyDirty = false");
-            }
             if (count == 0)
             {
                 Log.Warning("Recalculate called but there's no dirty map caches.");
             }
-
-            anyDirty = false;
         }
 
         public void ThingPriorityUpdated(Thing t, int newPriority)
@@ -171,7 +174,7 @@ namespace Prioritize2
                 {
                     DrawPriorityMarkTo(t);
 
-                    if (mouseAt.DistanceTo(pos) < 9f)
+                    if (mouseAt.DistanceTo(pos) < 10f)
                     {
                         newDrawLabels.Add(t);
                     }

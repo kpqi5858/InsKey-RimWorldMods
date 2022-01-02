@@ -26,6 +26,8 @@ namespace Prioritize2
 
         public bool patchGenClosest = false;
 
+        public bool universalConstructWorkgiver = true;
+
         //Multiplied to custom priority value
         //Can cause mod compatiblity issues if value is high. Can cause prioritizing doesn't work well if value is too low
         public float priorityMultiplier = 0.1f;
@@ -46,6 +48,7 @@ namespace Prioritize2
             }
         }
 
+        //I wanna keep these list small but I maybe should consider using HashSet
         public List<Type> NoPriorityPatchOnTypes
         {
             get
@@ -108,6 +111,7 @@ namespace Prioritize2
 
             Scribe_Values.Look(ref priorityMultiplier, "priorityMultiplier", priorityMultiplier);
 
+            Scribe_Values.Look(ref universalConstructWorkgiver, "universalConstructWorkgiver", universalConstructWorkgiver);
             NoPriorityPatchOnCacheDirty = true;
         }
     }
