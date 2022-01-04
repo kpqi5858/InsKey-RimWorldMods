@@ -19,7 +19,7 @@ namespace ItemListSelector
 
                 var original = GenTypes.GetTypeInAnyAssembly("ToggleableReadouts.ToggleableReadoutsUtility").GetMethod("HandleClicks", System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.NonPublic);
                 var postfix = typeof(Compat_ToggleableReadouts).GetMethod("Patch");
-                Log.Message("original=" + original + ", postfix=" + postfix);
+                
                 harmony.Patch(original, postfix: new HarmonyMethod(postfix));
             }
         }
