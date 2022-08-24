@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+  <!--Universal construct workgiver to be able to prioritize comprehensively-->
+  
+  <WorkGiverDef>
+    <defName>ConstructUniversal</defName>
+    <label>construct</label>
+    <giverClass>Prioritize2.WorkGiver_ConstructUniversal</giverClass>
+    <workType>Construction</workType>
+    <priorityInType>85</priorityInType>
+    <verb>thisstringshouldnotvisible1</verb>
+    <gerund>thisstringshouldnotvisible2</gerund>
+    <requiredCapacities>
+      <li>Manipulation</li>
+    </requiredCapacities>
+    <prioritizeSustains>true</prioritizeSustains>
+    <equivalenceGroup>AssistInConstruction</equivalenceGroup>
+  </WorkGiverDef>
+</Defs>

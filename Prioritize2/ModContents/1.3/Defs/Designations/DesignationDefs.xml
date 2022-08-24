@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+  <DesignationDef>
+    <defName>Priortize_Zone</defName>
+    <texturePath>Designations/Mine</texturePath>
+    <targetType>Cell</targetType>
+  </DesignationDef>
+  
+  <DesignationDef>
+    <defName>Priortize_Thing</defName>
+    <texturePath>Designations/Mine</texturePath>
+    <targetType>Thing</targetType>
+  </DesignationDef>
+</Defs>

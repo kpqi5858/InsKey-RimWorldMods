@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<LanguageData>
+  <P2_ModName>Prioritize 2</P2_ModName>
+
+  <P2_Recalculate>Caching..</P2_Recalculate>
+  
+  <P2_BannedRemoveRoof>Vanila: Prioritizing roof removal work can cause pawns to remove roofs in wrong order, causing roofs to fall.</P2_BannedRemoveRoof>
+
+  <P2_PrioritizeThing>Prioritize stuffs</P2_PrioritizeThing>
+  <P2_PrioritizeThingDesc>Prioritize various stuffs. Change filter settings to select what you want. Ctrl + Mouse wheel to change priority.</P2_PrioritizeThingDesc>
+
+  <P2_PrioritizeZone>Prioritize area</P2_PrioritizeZone>
+  <P2_PrioritizeZoneDesc>Prioritize specific area. Ctrl + Mouse wheel to change priority.</P2_PrioritizeZoneDesc>
+</LanguageData>

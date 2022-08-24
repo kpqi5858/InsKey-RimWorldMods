@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+  <DesignationCategoryDef>
+    <defName>PriorityTab</defName>
+    <label>priority</label>
+    <order>35</order>
+    <specialDesignatorClasses>
+      <li>Prioritize2.Designation.Designator_PrioritizeThing</li>
+      <li>Prioritize2.Designation.Designator_PrioritizeZone</li>
+    </specialDesignatorClasses>
+  </DesignationCategoryDef>
+</Defs>
