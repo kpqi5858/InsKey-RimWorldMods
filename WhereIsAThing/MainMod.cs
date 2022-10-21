@@ -1,51 +1,53 @@
 ﻿using System;
-using HugsLib;
 using HarmonyLib;
 using RimWorld;
 using Verse;
 using UnityEngine;
-using HugsLib.Utils;
-using System.Reflection;
 using System.Collections.Generic;
 using RimWorld.Planet;
 
 namespace ItemListSelector
 {
-    public class MainMod : ModBase
+    public class MainMod : Mod
     {
-        public override string ModIdentifier => "ItemListSelector";
+        public static MainMod instance;
 
-        public static ModLogger logger;
-
-        public static List<string> t = new List<string>();
-        public static CategorizedOpenSave Save;
-
-        public override void DefsLoaded()
+        public MainMod(ModContentPack content) : base(content)
         {
-            base.DefsLoaded();
-            logger = Logger;
-            foreach(string s in t)
-            {
-                Logger.Message(s);
-            }
-
-            Compat_ToggleableReadouts.PatchIfNeeded(HarmonyInst);
+            var harmony = new Harmony("InsertKey.ItemListSelector");
+            harmony.PatchAll();
+            Compat_ToggleableReadouts.PatchIfNeeded(harmony);
             /*
             if (ModLister.GetActiveModWithIdentifier("CodeOptimist.CustomThingFilters") != null)
             {
                 Compat.Compat_CustomThingFilters.Patch(HarmonyInst);
             }
             */
+            instance = this;
         }
 
-        public override void WorldLoaded()
+        private ThingDef toSelect;
+
+        public void WillSelectThisInStorage(ThingDef thingDef)
         {
-            base.WorldLoaded();
-            Save = Current.Game.GetComponent<CategorizedOpenSave>();
-            Save.ExpandCategories();
+            toSelect = thingDef;
         }
 
-        public static void SelectThisInStorage(ThingDef thingDef, Map map)
+        public void DoIfNotConsumed()
+        {
+            if (Event.current.type != EventType.Used && toSelect != null)
+            {
+                Event.current.Use();
+                SelectThisInStorage(toSelect);
+            }
+            toSelect = null;
+        }
+
+        /// <summary>
+        /// Tries to select that thingDef in CurrentMap if the event is not consumed.
+        /// </summary>
+        /// <param name="thingDef"></param>
+        private static void SelectThisInStorage(ThingDef thingDef)
         {
             Selector s = Find.Selector;
             if (s == null) return;

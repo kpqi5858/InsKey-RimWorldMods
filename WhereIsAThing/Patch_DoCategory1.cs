@@ -60,7 +60,7 @@ namespace ItemListSelector
             }
 
             //Patch
-            if (MainMod.Save?.CategoryFilter.Allows(rDef) == false)
+            if (CategorizedOpenSave.instance?.CategoryFilter.Allows(rDef) == false)
             {
                 return 0;
             }

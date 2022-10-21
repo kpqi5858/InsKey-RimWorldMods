@@ -32,7 +32,7 @@ namespace ItemListSelector
         {
             bool originalRet = pair.Value > 0 || pair.Key.resourceReadoutAlwaysShow;
 
-            return originalRet && MainMod.Save?.CategoryFilter.Allows(pair.Key) == true;
+            return originalRet && CategorizedOpenSave.instance?.CategoryFilter.Allows(pair.Key) == true;
         }
     }
 }

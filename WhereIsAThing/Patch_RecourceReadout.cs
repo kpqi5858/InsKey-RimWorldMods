@@ -3,7 +3,6 @@ using HarmonyLib;
 using RimWorld;
 using Verse;
 using UnityEngine;
-using HugsLib.Utils;
 
 namespace ItemListSelector
 {
@@ -13,7 +12,6 @@ namespace ItemListSelector
         //TODO : Convert to transpiler
         public static void Postfix(ThingDef thingDef, int nestLevel, Listing_ResourceReadout __instance)
         {
-            ModLogger l = MainMod.logger;
             if (Event.current.button == 0 && Event.current.type == EventType.MouseUp)
             {
                 try
@@ -25,10 +23,14 @@ namespace ItemListSelector
                     };
                     if (!Mouse.IsOver(rect)) return;
                 }
-                catch (Exception e) { l.ReportException(e); return; }
+                catch (Exception e)
+                {
+                    Log.ErrorOnce("ItemListSelector Patch_RecourceReadout failed: " + e, "ILS_Patch_ResourceReadout".GetHashCode());
+                    return;
+                }
 
-                Event.current.Use();
-                MainMod.SelectThisInStorage(thingDef, Find.CurrentMap);
+                //Event.current.Use();
+                MainMod.instance?.WillSelectThisInStorage(thingDef);
             }
         }
     }

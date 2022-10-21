@@ -16,8 +16,8 @@ namespace ItemListSelector
                 {
                     return;
                 }
-                Event.current.Use();
-                MainMod.SelectThisInStorage(thingDef, Find.CurrentMap);
+                //Event.current.Use();
+                MainMod.instance?.WillSelectThisInStorage(thingDef);
             }
         }
     }

@@ -31,7 +31,8 @@ namespace ItemListSelector
                 if (eventType == EventType.MouseDown) eventCurrent.Use();
                 else if (eventType == EventType.MouseUp)
                 {
-                    MainMod.SelectThisInStorage((ThingDef)def, Find.CurrentMap);
+                    //Idk but the change may break this patch..
+                    MainMod.instance?.WillSelectThisInStorage((ThingDef)def);
                 }
             }
         }

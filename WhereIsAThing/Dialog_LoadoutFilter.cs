@@ -19,7 +19,7 @@ namespace ItemListSelector
 
         public override void DoWindowContents(Rect inRect)
         {
-            var modSave = MainMod.Save;
+            var modSave = CategorizedOpenSave.instance;
             int OpenMask = 9;
             float yOffset = 10;
 

@@ -5,8 +5,11 @@ using System.Linq;
 
 namespace ItemListSelector
 {
+    //I want to change this class name but it would break saves (probably harmlessly)..
     public class CategorizedOpenSave : GameComponent
     {
+        public static CategorizedOpenSave instance;
+
         public List<string> OpenNodesName = new List<string>();
         public static readonly int OpenMaskVal = 32;
 
@@ -29,6 +32,7 @@ namespace ItemListSelector
                     CategoryFilterGlobal.SetAllow(def, true);
                 }
             }
+            instance = this;
         }
 
         //For CustomThingFilters.
@@ -40,6 +44,7 @@ namespace ItemListSelector
             {
                 InitCategoryFilter();
             }
+            ExpandCategories();
         }
 
         private void InitCategoryFilter()
