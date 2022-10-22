@@ -1,8 +1,10 @@
 ﻿using HarmonyLib;
 using HugsLib;
+using HugsLib.Settings;
 using RimWorld;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using UnityEngine;
 using Verse;
 using Verse.Sound;
@@ -16,42 +18,50 @@ namespace BuilderTweaks
 
         #region BuildingDesignatorTweak
 
-        private IntVec3 DragStart = IntVec3.Invalid;
-        private bool IsCancelDragging = false;
-        private HashSet<Thing> selectedThings = new HashSet<Thing>();
         public static BuilderTweaksMod instance;
+
+        private static Texture2D CancelIcon = ContentFinder<Texture2D>.Get("UI/Designators/Cancel", true);
+        private MethodInfo CheckSelectedDesignatorValid = AccessTools.Method(typeof(DesignatorManager), "CheckSelectedDesignatorValid");
+
+        private IntVec3 DragStart = IntVec3.Invalid;
+        public bool IsCancelDragging = false;
+        private HashSet<Thing> selectedThings = new HashSet<Thing>();
+        private IntVec3 PreviousCell = IntVec3.Invalid;
+        private bool ClickedFlag = false;
+        private Vector2 previousMousePos;
+
+        //Drag with right click to cancel building designation
+        private SettingHandle<bool> enableCancelDragging;
+        //^ Only cancel the same selected building designation
+        private SettingHandle<bool> cancelOnlySameKind;
+        //Drag with left click to continuously place designation
+        private SettingHandle<bool> enableContinuousDesignating;
+        //Middle click to select designator of the building below
+        private SettingHandle<bool> enableMiddleClick;
 
         public override void DefsLoaded()
         {
             base.DefsLoaded();
             instance = this;
-        }
-        public override void OnGUI()
-        {
-            //BuildingDesignatorControl();
-            if (Event.current.type == EventType.MouseUp && Event.current.button == 1 && IsCancelDragging)
-            {
-                IsCancelDragging = false;
-                PreviousCell = IntVec3.Invalid;
-                if (selectedThings.Any())
-                {
-                    selectedThings.Do(delegate (Thing t) { t.Destroy(DestroyMode.Cancel); });
-                    selectedThings.Clear();
-                    SoundDefOf.Designate_Cancel.PlayOneShotOnCamera();
-                    Event.current.Use();
-                }
-                else
-                {
-                    SoundDefOf.CancelMode.PlayOneShotOnCamera(null);
-                    Find.DesignatorManager?.Deselect();
-                }
-            }
+
+            enableCancelDragging = Settings.GetHandle("enableCancelDragging", "BT_enableCancelDragging_title".Translate(), "BT_enableCancelDragging_desc".Translate(), true);
+            cancelOnlySameKind = Settings.GetHandle("cancelOnlySameKind", "BT_cancelOnlySameKind_title".Translate(), "BT_cancelOnlySameKind_desc".Translate(), true);
+            enableContinuousDesignating = Settings.GetHandle("enableContinuousDesignating", "BT_enableContinuousDesignating_title".Translate(), "BT_enableContinuousDesignating_desc".Translate(), true);
+            enableMiddleClick = Settings.GetHandle("enableMiddleClick", "BT_enableMiddleClick_title".Translate(), "BT_enableMiddleClick_desc".Translate(), true);
         }
 
         //Designator_Cancel.CanDesignateThing
-        private bool CanCancelBlueprint(Thing t)
+        private bool ShouldCancelBlueprint(Thing t)
         {
-            return t.Faction == Faction.OfPlayer && (t is Frame || t is Blueprint);
+            if (t.Faction != Faction.OfPlayer) return false;
+            if (!(t is Frame || t is Blueprint)) return false;
+            if (cancelOnlySameKind.Value)
+            {
+                BuildableDef selectedThing = (Find.DesignatorManager?.SelectedDesignator as Designator_Build)?.PlacingDef;
+                return selectedThing == null ? true : t.def.entityDefToBuild == selectedThing;
+            }
+
+            return true;
         }
 
         private void RenderCancelHighlights()
@@ -69,7 +79,7 @@ namespace BuilderTweaks
                 for (int i = 0; i < thingslist.Count; i++)
                 {
                     var t = thingslist[i];
-                    if (CanCancelBlueprint(t) && !selectedThings.Contains(t))
+                    if (ShouldCancelBlueprint(t) && !selectedThings.Contains(t))
                     {
                         selectedThings.Add(t);
                         Vector3 drawPos = t.DrawPos;
@@ -88,209 +98,192 @@ namespace BuilderTweaks
             }
         }
 
-        IntVec3 PreviousCell = IntVec3.Invalid;
-        bool ClickedFlag = false;
-        static Texture2D CancelIcon = ContentFinder<Texture2D>.Get("UI/Designators/Cancel", true);
-        IntVec3 MiddleClickCell = IntVec3.Invalid;
-
-        public bool BuildingDesignatorControl()
+        public bool BuildingDesignatorControl2()
         {
             if (Find.CurrentMap == null || Find.DesignatorManager == null) return true;
+
             var Dem = Find.DesignatorManager.SelectedDesignator;
-            if (Dem != null && Dem is Designator_Build)
+
+            //This is not Building designator, or invalid
+            if (!(Dem is Designator_Build) || !(bool)CheckSelectedDesignatorValid.Invoke(Find.DesignatorManager, null))
             {
-                if (Event.current.type == EventType.MouseDown && Event.current.button == 2)
+                IsCancelDragging = false;
+                return true;
+            }
+
+            if (IsCancelDragging)
+            {
+                GenUI.DrawMouseAttachment(CancelIcon, string.Empty, 0);
+            }
+
+            return MiddleClickFeature() && CancelDragFeature() && LeftDragFeature();
+        }
+
+        public bool MiddleClickFeature()
+        {
+            if (!enableMiddleClick.Value) return true;
+            if (Event.current.type == EventType.MouseDown && Event.current.button == 2)
+            {
+                previousMousePos = UI.MousePositionOnUI;
+            }
+            //Middle click to select designator
+            if (Event.current.type == EventType.MouseUp && Event.current.button == 2 && previousMousePos == UI.MousePositionOnUI)
+            {
+                IntVec3 UICell = UI.MouseCell();
+                Map map = Find.CurrentMap;
+                if (!UICell.InBounds(map)) return false;
+
+                //Search for Blueprint, Frame, and Building in order
+                //Why I need to cast first to Thing? weird..
+                Thing targetThing = UICell.GetFirstThing<Blueprint>(map) as Thing
+                                 ?? UICell.GetFirstThing<Frame>(map)
+                                 ?? UICell.GetFirstBuilding(map);
+
+                //Can't find things
+                if (targetThing == null)
                 {
-                    //Better than UI.mousecell
-                    MiddleClickCell = Find.CameraDriver.MapPosition;
-                }
-
-                //Middle click to select designator
-                if (Event.current.type == EventType.MouseUp && Event.current.button == 2 && MiddleClickCell == Find.CameraDriver.MapPosition)
-                {
-                    Thing targetThing = null;
-                    IntVec3 UICell = UI.MouseCell();
-                    Map map = Find.CurrentMap;
-                    if (map == null) return false;
-                    if (!UICell.InBounds(map)) return false;
-
-                    //Search for blueprints
-                    if (targetThing == null) targetThing = UICell.GetFirstThing<Blueprint>(map);
-
-                    //Search for frames
-                    if (targetThing == null) targetThing = UICell.GetFirstThing<Frame>(map);
-
-                    //Search for Buildings
-                    if (targetThing == null) targetThing = UICell.GetFirstBuilding(map);
-
-                    //Can't find things
-                    if (targetThing == null)
-                    {
-                        //SoundDefOf.ClickReject.PlayOneShotOnCamera();
-                        Event.current.Use();
-                        return false;
-                    }
-
-                    //Find designator
-                    Designator_Build Desig = null;
-                    Desig = BuildCopyCommandUtility.FindAllowedDesignator(targetThing.def);
-
-                    if (Desig == null && (targetThing is Blueprint || targetThing is Frame))
-                    {
-                        Desig = BuildCopyCommandUtility.FindAllowedDesignator(targetThing.def.entityDefToBuild);
-                    }
-
-                    if ((targetThing.def.BuildableByPlayer || targetThing.def.entityDefToBuild?.BuildableByPlayer == true) && Desig != null)
-                    {
-                        //Set stuff
-
-                        if (targetThing.Stuff != null)
-                            Desig.SetStuffDef(targetThing.Stuff);
-                        if ((targetThing as Blueprint_Build)?.stuffToUse != null)
-                            Desig.SetStuffDef((targetThing as Blueprint_Build).stuffToUse);
-                        if ((targetThing as Blueprint_Install)?.Stuff != null)
-                            Desig.SetStuffDef((targetThing as Blueprint_Install).Stuff);
-                        if ((targetThing as Frame)?.Stuff != null)
-                            Desig.SetStuffDef((targetThing as Frame).Stuff);
-
-                        Find.DesignatorManager.Select(Desig);
-                        SoundDefOf.Click.PlayOneShotOnCamera();
-                    }
-                    else
-                    {
-                        //SoundDefOf.ClickReject.PlayOneShotOnCamera();
-                    }
-
                     Event.current.Use();
                     return false;
                 }
-                
-                //Cancel drag
 
-                //First, absorb Right click event, handle it manually
-                if (Event.current.type == EventType.MouseDown && Event.current.button == 1) Event.current.Use();
+                //Find designator
+                Designator_Build designator = BuildCopyCommandUtility.FindAllowedDesignator(targetThing.def);
 
-                if (IsCancelDragging)
+                if (designator == null && (targetThing is Blueprint || targetThing is Frame))
                 {
-                    GenUI.DrawMouseAttachment(CancelIcon, string.Empty, 0);
-                }
-                if (Input.GetMouseButton(1))
-                {
-                    if (IsCancelDragging)
-                    {
-                        //RenderCancelHighlights();
-                    }
-                    else
-                    {
-                        //Start cancel dragging
-
-                        IsCancelDragging = true;
-                        DragStart = UI.MouseCell();
-                        SoundDefOf.Click.PlayOneShotOnCamera(null);
-                    }
+                    designator = BuildCopyCommandUtility.FindAllowedDesignator(targetThing.def.entityDefToBuild);
                 }
 
-                //Right click up
-                else if (Event.current.type == EventType.MouseUp && Event.current.button == 1)
+                if (designator != null && (targetThing.def.entityDefToBuild?.BuildableByPlayer ?? targetThing.def.BuildableByPlayer))
                 {
-                    IsCancelDragging = false;
+                    //Set stuff
+
+                    ThingDef stuff = targetThing.Stuff
+                                  ?? (targetThing as Blueprint_Build)?.stuffToUse
+                                  ?? (targetThing as Blueprint_Install)?.Stuff
+                                  ?? (targetThing as Frame)?.Stuff;
+
+                    if (stuff != null) designator.SetStuffDef(stuff);
+
+                    Find.DesignatorManager.Select(designator);
+                    SoundDefOf.Click.PlayOneShotOnCamera();
+                }
+
+                Event.current.Use();
+                return false;
+            }
+            return true;
+        }
+
+        public bool CancelDragFeature()
+        {
+            if (!enableCancelDragging.Value) return true;
+            if (Event.current.type == EventType.MouseDown && Event.current.button == 1)
+            {
+                //Start cancel dragging
+
+                IsCancelDragging = true;
+                DragStart = UI.MouseCell();
+                SoundDefOf.Click.PlayOneShotOnCamera(null);
+
+                Event.current.Use();
+            }
+            //Right click up
+            else if (Event.current.type == EventType.MouseUp && Event.current.button == 1 && IsCancelDragging)
+            {
+                IsCancelDragging = false;
+                PreviousCell = IntVec3.Invalid;
+                if (selectedThings.Any())
+                {
+                    selectedThings.Do(delegate (Thing t) { t.Destroy(DestroyMode.Cancel); });
                     selectedThings.Clear();
+                    SoundDefOf.Designate_Cancel.PlayOneShotOnCamera();
                     Event.current.Use();
-
-                    if (selectedThings.Any())
-                    {
-                        selectedThings.Do(delegate (Thing t) { t.Destroy(DestroyMode.Cancel); });
-                        SoundDefOf.Designate_Cancel.PlayOneShotOnCamera();
-                    }
-                    else
-                    {
-                        SoundDefOf.CancelMode.PlayOneShotOnCamera(null);
-                        Find.DesignatorManager.Deselect();
-                        return false;
-                    }
-
                 }
-
-                //While cancel dragging, left click to abort
-                if (Event.current.type == EventType.MouseDown && Event.current.button == 0 && IsCancelDragging)
+                else
                 {
-                    selectedThings.Clear();
-                    IsCancelDragging = false;
                     SoundDefOf.CancelMode.PlayOneShotOnCamera(null);
                     Find.DesignatorManager.Deselect();
-                    Event.current.Use();
                     return false;
                 }
+            }
+            //While cancel dragging, left click to abort
+            else if (Event.current.type == EventType.MouseDown && Event.current.button == 0 && IsCancelDragging)
+            {
+                selectedThings.Clear();
+                IsCancelDragging = false;
+                SoundDefOf.CancelMode.PlayOneShotOnCamera(null);
+                Find.DesignatorManager.Deselect();
+                Event.current.Use();
+                return false;
+            }
+            return true;
+        }
 
-                //Drag to place blueprints
+        public bool LeftDragFeature()
+        {
+            if (!enableContinuousDesignating.Value) return true;
 
-                var BuildDesignator = (Designator_Build)Dem;
+            var designator = (Designator_Build)Find.DesignatorManager.SelectedDesignator;
+            if (designator.DraggableDimensions != 0) return true;
 
-                if (BuildDesignator.DraggableDimensions != 0) return true;
+            if (Event.current.type == EventType.MouseDown && Event.current.button == 0)
+            {
+                PreviousCell = IntVec3.Invalid;
+                ClickedFlag = true;
+                Event.current.Use();
+            }
+            if (Event.current.type == EventType.MouseUp && Event.current.button == 0)
+            {
+                PreviousCell = IntVec3.Invalid;
+                ClickedFlag = false;
+                Event.current.Use();
+            }
 
-                if (Event.current.type == EventType.MouseDown && Event.current.button == 0)
+            if (Input.GetMouseButton(0) && !Mouse.IsInputBlockedNow && PreviousCell != UI.MouseCell() && ClickedFlag)
+            {
+                var acceptanceReport = designator.CanDesignateCell(UI.MouseCell());
+
+                if (DebugSettings.godMode && acceptanceReport.Accepted) //Handle god mode
                 {
-                    PreviousCell = IntVec3.Invalid;
-                    ClickedFlag = true;
-                    Event.current.Use();
-                }
-                if (Event.current.type == EventType.MouseUp && Event.current.button == 0)
-                {
-                    PreviousCell = IntVec3.Invalid;
-                    ClickedFlag = false;
-                    Event.current.Use();
-                }
-
-                if (Input.GetMouseButton(0) && !Mouse.IsInputBlockedNow && PreviousCell != UI.MouseCell() && ClickedFlag)
-                {
-                    var acceptanceReport = BuildDesignator.CanDesignateCell(UI.MouseCell());
-
-                    if (DebugSettings.godMode && acceptanceReport.Accepted) //Handle god mode
+                    Traverse t = Traverse.Create(designator);
+                    BuildableDef entDef = t.Field("entDef").GetValue<BuildableDef>();
+                    Rot4 rot = t.Field("placingRot").GetValue<Rot4>();
+                    CellRect cellRect = GenAdj.OccupiedRect(UI.MouseCell(), rot, entDef.Size);
+                    foreach (IntVec3 c in cellRect)
                     {
-                        Traverse t = Traverse.Create(BuildDesignator);
-                        BuildableDef entDef = t.Field("entDef").GetValue<BuildableDef>();
-                        Rot4 rot = t.Field("placingRot").GetValue<Rot4>();
-                        CellRect cellRect = GenAdj.OccupiedRect(UI.MouseCell(), rot, entDef.Size);
-                        foreach (IntVec3 c in cellRect)
+                        var thinglist = c.GetThingList(Find.CurrentMap);
+                        for (int i = 0; i < thinglist.Count; i++)
                         {
-                            var thinglist = c.GetThingList(Find.CurrentMap);
-                            for (int i = 0; i < thinglist.Count; i++)
+                            var thing3 = thinglist[i];
+                            if (!GenConstruct.CanPlaceBlueprintOver(entDef, thing3.def))
                             {
-                                var thing3 = thinglist[i];
-                                if (!GenConstruct.CanPlaceBlueprintOver(entDef, thing3.def))
-                                {
-                                    acceptanceReport = new AcceptanceReport("SpaceAlreadyOccupied_DevFail");
-                                }
+                                acceptanceReport = new AcceptanceReport("SpaceAlreadyOccupied_DevFail");
                             }
                         }
                     }
-                    if (acceptanceReport.Accepted)
-                    {
-                        BuildDesignator.DesignateSingleCell(UI.MouseCell());
-                        BuildDesignator.Finalize(true);
-                    }
-                    else
-                    {
-                        //If this is first cell clicked
-                        if (PreviousCell == IntVec3.Invalid)
-                        {
-                            Messages.Message(acceptanceReport.Reason, MessageTypeDefOf.SilentInput, false);
-                            BuildDesignator.Finalize(false);
-                        }
-                    }
-
-                    PreviousCell = UI.MouseCell();
-                    //Event.current.Use();
                 }
+                if (acceptanceReport.Accepted)
+                {
+                    designator.DesignateSingleCell(UI.MouseCell());
+                    designator.Finalize(true);
+                }
+                else
+                {
+                    //If this is first cell clicked
+                    if (PreviousCell == IntVec3.Invalid)
+                    {
+                        Messages.Message(acceptanceReport.Reason, MessageTypeDefOf.SilentInput, false);
+                        designator.Finalize(false);
+                    }
+                }
+
+                PreviousCell = UI.MouseCell();
                 return false;
             }
-            else //This is not Building designator
-            {
-                IsCancelDragging = false; 
-                return true; 
-            }
+            return true;
         }
-        
+
         #endregion
     }
 
@@ -299,7 +292,7 @@ namespace BuilderTweaks
     {
         public static bool Prefix()
         {
-            return BuilderTweaksMod.instance.BuildingDesignatorControl();
+            return BuilderTweaksMod.instance.BuildingDesignatorControl2();
         }
     }
 }
