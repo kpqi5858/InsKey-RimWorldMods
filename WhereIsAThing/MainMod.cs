@@ -62,20 +62,12 @@ namespace ItemListSelector
                 }
                 return true;
             };
-            var thingsGroupsList = Find.CurrentMap.haulDestinationManager.AllHaulDestinationsListForReading;
+            var thingsGroupsList = Find.CurrentMap.haulDestinationManager.AllGroupsListForReading;
 
             for (int i = 0; i < thingsGroupsList.Count; i++)
             {
                 var sg = thingsGroupsList[i];
-                if (sg is ISlotGroupParent)
-                {
-                    ((ISlotGroupParent)sg).GetSlotGroup().HeldThings.DoIf(predicate, (Thing t) => s.Select(t));
-                }
-                else if (sg is Thing)
-                {
-                    ThingOwner owner = ((Thing)sg).TryGetInnerInteractableThingOwner();
-                    if (owner != null) owner.DoIf(predicate, (Thing t) => s.Select(t));
-                }
+                sg.HeldThings.DoIf(predicate, (Thing t) => s.Select(t));
             }
             s.dragBox.active = false;
         }
