@@ -17,7 +17,7 @@ namespace Prioritize
             useMouseIcon = true;
             defaultLabel = "P_DesignatorThingLabel".Translate();
             defaultDesc = "P_DesignatorThingDesc".Translate();
-            soundSucceeded = SoundDefOf.Designate_Mine;
+            soundSucceeded = SoundDefOf.Designate_PlanAdd;
             
         }
         public override IEnumerable<FloatMenuOption> RightClickFloatMenuOptions
